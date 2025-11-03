@@ -102,6 +102,7 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         status = self.coordinator.data.get("status") if isinstance(self.coordinator.data, dict) else None
         self._ensure_valid_transition(stamp_type, status)
         stamp_kwargs = self._derive_stamp_kwargs(stamp_type, status)
+        stamp_kwargs = self._derive_stamp_kwargs()
 
         try:
             await self._client.async_create_stamp(stamp_type, **stamp_kwargs)
@@ -111,6 +112,22 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
 
     def _ensure_valid_transition(self, stamp_type: str, status: str | None) -> None:
         """Validate that the requested transition is allowed."""
+
+        if status is None:
+            return
+
+        if stamp_type == STAMP_TYPE_START_WORK:
+            if status == "clocked_in":
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: already clocked in")
+        elif stamp_type == STAMP_TYPE_START_BREAK:
+            if status != "clocked_in":
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift to pause")
+        elif stamp_type == STAMP_TYPE_CLOCK_OUT:
+            if status not in {"clocked_in", "on_break"}:
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift to clock out from")
+
+    def _derive_stamp_kwargs(self) -> dict[str, object]:
+        """Return payload parameters derived from the latest stamp."""
 
         if status is None:
             return
@@ -161,6 +178,9 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
     def _extract_chain_start(latest_stamp: dict[str, object] | None) -> int | None:
         if not latest_stamp:
             return None
+        allocation_date = latest_stamp.get("allocationDate")
+        if isinstance(allocation_date, str) and allocation_date:
+            return {"allocation_date": allocation_date}
 
         raw_value = latest_stamp.get("chainStartStampId")
         if raw_value is None:
