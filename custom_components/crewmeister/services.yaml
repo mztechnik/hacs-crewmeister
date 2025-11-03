@@ -1,0 +1,32 @@
+create_stamp:
+  translation_key: create_stamp
+  fields:
+    stamp_type:
+      translation_key: stamp_type
+      required: true
+      selector:
+        select:
+          options:
+            - START_WORK
+            - START_BREAK
+            - CLOCK_OUT
+    timestamp:
+      translation_key: timestamp
+      selector:
+        datetime:
+          with_time: true
+    note:
+      translation_key: note
+      selector:
+        text:
+          multiline: false
+    location:
+      translation_key: location
+      selector:
+        text:
+          multiline: false
+    config_entry_id:
+      translation_key: config_entry_id
+      selector:
+        text:
+          multiline: false

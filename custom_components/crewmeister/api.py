@@ -14,7 +14,6 @@ import async_timeout
 from .const import (
     CONF_CREW_ID,
     CONF_USER_ID,
-    STAMP_STATUS_BY_TYPE,
     STAMP_TYPES,
     TOKEN_REFRESH_MARGIN,
 )
@@ -280,7 +279,6 @@ class CrewmeisterClient:
         identity = await self.async_get_identity()
         timestamp = timestamp or datetime.now(timezone.utc)
         timestamp_utc = timestamp.astimezone(timezone.utc)
-        stamp_status = STAMP_STATUS_BY_TYPE.get(stamp_type)
 
         payload: dict[str, Any] = {
             "@type": "com.crewmeister/Stamp",
@@ -290,8 +288,6 @@ class CrewmeisterClient:
             "timestamp": timestamp_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
             "allocationDate": timestamp_utc.date().isoformat(),
         }
-        if stamp_status:
-            payload["stampStatus"] = stamp_status
         if note:
             payload["note"] = note
         if location:
