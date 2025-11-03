@@ -24,6 +24,13 @@ create_stamp:
       selector:
         text:
           multiline: false
+    time_account_id:
+      translation_key: time_account_id
+      selector:
+        number:
+          min: 1
+          mode: box
+          step: 1
     config_entry_id:
       translation_key: config_entry_id
       selector:

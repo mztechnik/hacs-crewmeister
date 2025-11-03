@@ -21,6 +21,8 @@ from .const import (
     CONF_ABSENCE_STATES,
     CONF_BASE_URL,
     CONF_CREW_ID,
+    CONF_STAMP_NOTE,
+    CONF_STAMP_TIME_ACCOUNT_ID,
     CONF_UPDATE_INTERVAL,
     CONF_USER_ID,
     DEFAULT_BASE_URL,
@@ -126,6 +128,8 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
         else:
             update_interval = int(DEFAULT_UPDATE_INTERVAL.total_seconds())
         absence_states = self.entry.options.get(CONF_ABSENCE_STATES, [])
+        stamp_note = self.entry.options.get(CONF_STAMP_NOTE, "")
+        stamp_time_account_id = self.entry.options.get(CONF_STAMP_TIME_ACCOUNT_ID)
 
         absence_state_options = {
             "APPROVED": "Approved",
@@ -142,6 +146,8 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_ABSENCE_STATES, default=absence_states or ["APPROVED", "PRE_APPROVED"]): cv.multi_select(
                     absence_state_options
                 ),
+                vol.Optional(CONF_STAMP_NOTE, default=stamp_note): vol.Any(str, None),
+                vol.Optional(CONF_STAMP_TIME_ACCOUNT_ID, default=stamp_time_account_id): vol.Any(None, cv.positive_int),
             }
         )
 

@@ -26,7 +26,9 @@
       "init": {
         "data": {
           "update_interval": "Aktualisierungsintervall (Sekunden)",
-          "absence_states": "Anzuzeigende Abwesenheitsstatus"
+          "absence_states": "Anzuzeigende Abwesenheitsstatus",
+          "stamp_note": "Standardnotiz für Stempelungen",
+          "stamp_time_account_id": "Standard-Zeitkonto-ID"
         }
       }
     }
@@ -82,6 +84,10 @@
         "location": {
           "name": "Ort",
           "description": "Optionaler Ort zur Stempelung."
+        },
+        "time_account_id": {
+          "name": "Zeitkonto-ID",
+          "description": "Optionale Zeitkonto-ID, die der Stempelung zugeordnet wird."
         },
         "config_entry_id": {
           "name": "Konfiguration",
