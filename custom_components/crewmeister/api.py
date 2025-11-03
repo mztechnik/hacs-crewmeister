@@ -270,6 +270,7 @@ class CrewmeisterClient:
         chain_start_stamp_id: int | None = None,
         time_account_id: int | None = None,
         time_category_ids: dict[str, int | None] | None = None,
+        allocation_date: str | None = None,
     ) -> CrewmeisterStamp:
         """Create a new stamp for the authenticated user."""
 
@@ -286,7 +287,7 @@ class CrewmeisterClient:
             "userId": identity.user_id,
             "stampType": stamp_type,
             "timestamp": timestamp_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
-            "allocationDate": timestamp_utc.date().isoformat(),
+            "allocationDate": allocation_date or timestamp_utc.date().isoformat(),
         }
         if note:
             payload["note"] = note
