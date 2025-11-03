@@ -59,9 +59,16 @@ async def async_setup_entry(
     runtime_data = hass.data[DOMAIN][entry.entry_id]
     coordinator: CrewmeisterStatusCoordinator = runtime_data["coordinator"]
     client: CrewmeisterClient = runtime_data["client"]
+    stamp_defaults: dict[str, object] = runtime_data.get("stamp_defaults", {})
 
     entities = [
-        CrewmeisterStampButton(coordinator, client, entry.entry_id, description)
+        CrewmeisterStampButton(
+            coordinator,
+            client,
+            entry.entry_id,
+            description,
+            stamp_defaults,
+        )
         for description in BUTTON_DESCRIPTIONS
     ]
     async_add_entities(entities)
@@ -78,12 +85,14 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         client: CrewmeisterClient,
         entry_id: str,
         description: CrewmeisterButtonEntityDescription,
+        stamp_defaults: dict[str, object] | None = None,
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = description
         self._client = client
         self._entry_id = entry_id
         self._attr_unique_id = f"{entry_id}_{description.key}"
+        self._stamp_defaults = stamp_defaults or {}
 
     @property
     def device_info(self) -> DeviceInfo | None:
@@ -107,9 +116,18 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
 
         self._ensure_valid_transition(stamp_type, status)
         stamp_kwargs = self._derive_stamp_kwargs(stamp_type, status)
+        note = self._stamp_defaults.get("note")
+        note = note if isinstance(note, str) else None
+        time_account_id = self._stamp_defaults.get("time_account_id")
+        time_account_id = time_account_id if isinstance(time_account_id, int) else None
 
         try:
-            await self._client.async_create_stamp(stamp_type, **stamp_kwargs)
+            await self._client.async_create_stamp(
+                stamp_type,
+                note=note,
+                time_account_id=time_account_id,
+                **stamp_kwargs,
+            )
         except CrewmeisterError as err:
             raise HomeAssistantError(
                 f"Failed to trigger Crewmeister stamp: {err}"
