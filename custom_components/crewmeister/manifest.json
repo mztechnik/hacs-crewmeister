@@ -1,0 +1,11 @@
+{
+  "domain": "crewmeister",
+  "name": "Crewmeister",
+  "version": "0.1.0",
+  "documentation": "https://github.com/home-assistant/core",
+  "codeowners": ["@crewmeister"],
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "config_flow": true,
+  "requirements": []
+}

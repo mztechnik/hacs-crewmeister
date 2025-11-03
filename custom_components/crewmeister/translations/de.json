@@ -1,0 +1,93 @@
+{
+  "title": "Crewmeister",
+  "config": {
+    "step": {
+      "user": {
+        "description": "Verbinde Home Assistant mit deinem Crewmeister-Konto.",
+        "data": {
+          "base_url": "API-Basis-URL",
+          "username": "E-Mail-Adresse",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zur Crewmeister-API fehlgeschlagen.",
+      "invalid_auth": "Benutzername oder Passwort sind ungültig.",
+      "no_identity": "Dein Crewmeister-Profil konnte nicht ermittelt werden.",
+      "unknown": "Unerwarteter Fehler. Bitte versuche es erneut."
+    },
+    "abort": {
+      "reauth_successful": "Erneute Anmeldung erfolgreich."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "absence_states": "Anzuzeigende Abwesenheitsstatus"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status"
+      },
+      "last_stamp": {
+        "name": "Letzte Stempelung"
+      }
+    },
+    "binary_sensor": {
+      "working": {
+        "name": "Eingestempelt"
+      }
+    },
+    "button": {
+      "clock_in": {
+        "name": "Einstempeln"
+      },
+      "start_break": {
+        "name": "Pause starten"
+      },
+      "clock_out": {
+        "name": "Ausstempeln"
+      }
+    },
+    "calendar": {
+      "absences": {
+        "name": "Abwesenheiten"
+      }
+    }
+  },
+  "services": {
+    "create_stamp": {
+      "name": "Stempel erstellen",
+      "description": "Erstellt eine Crewmeister-Stempelung.",
+      "fields": {
+        "stamp_type": {
+          "name": "Stempeltyp",
+          "description": "Art der Stempelung."
+        },
+        "timestamp": {
+          "name": "Zeitstempel",
+          "description": "Optionaler Zeitpunkt für die Stempelung (Standard: jetzt)."
+        },
+        "note": {
+          "name": "Notiz",
+          "description": "Optionale Notiz zur Stempelung."
+        },
+        "location": {
+          "name": "Ort",
+          "description": "Optionaler Ort zur Stempelung."
+        },
+        "config_entry_id": {
+          "name": "Konfiguration",
+          "description": "Optional eine bestimmte Crewmeister-Instanz auswählen."
+        }
+      }
+    }
+  }
+}
