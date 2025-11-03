@@ -1,0 +1,93 @@
+{
+  "title": "Crewmeister",
+  "config": {
+    "step": {
+      "user": {
+        "description": "Connect Home Assistant to your Crewmeister account.",
+        "data": {
+          "base_url": "API base URL",
+          "username": "Email address",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the Crewmeister API.",
+      "invalid_auth": "Invalid username or password.",
+      "no_identity": "Could not determine your Crewmeister user profile.",
+      "unknown": "Unexpected error. Please try again."
+    },
+    "abort": {
+      "reauth_successful": "Re-authentication successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "update_interval": "Status update interval (seconds)",
+          "absence_states": "Absence states to include"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status"
+      },
+      "last_stamp": {
+        "name": "Last stamp"
+      }
+    },
+    "binary_sensor": {
+      "working": {
+        "name": "Clocked in"
+      }
+    },
+    "button": {
+      "clock_in": {
+        "name": "Clock in"
+      },
+      "start_break": {
+        "name": "Start break"
+      },
+      "clock_out": {
+        "name": "Clock out"
+      }
+    },
+    "calendar": {
+      "absences": {
+        "name": "Absences"
+      }
+    }
+  },
+  "services": {
+    "create_stamp": {
+      "name": "Create stamp",
+      "description": "Create a Crewmeister time tracking stamp.",
+      "fields": {
+        "stamp_type": {
+          "name": "Stamp type",
+          "description": "Type of stamp to create."
+        },
+        "timestamp": {
+          "name": "Timestamp",
+          "description": "Optional timestamp for the stamp (defaults to now)."
+        },
+        "note": {
+          "name": "Note",
+          "description": "Optional note to attach to the stamp."
+        },
+        "location": {
+          "name": "Location",
+          "description": "Optional location to attach to the stamp."
+        },
+        "config_entry_id": {
+          "name": "Configuration entry",
+          "description": "Target a specific Crewmeister configuration entry (optional)."
+        }
+      }
+    }
+  }
+}
