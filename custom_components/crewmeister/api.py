@@ -291,13 +291,14 @@ class CrewmeisterClient:
 
         # ``allocationDate`` is managed by the backend once a stamp chain exists.
         # Passing a different value for follow-up stamps triggers a 400 error, so we
-        # only include it for new chains or when a caller explicitly provides the
-        # previously assigned value.
+        # only include it for new chains. When a chain is already known we ignore any
+        # value supplied by callers and let the server reuse the existing one.
         resolved_allocation_date: str | None = None
-        if isinstance(allocation_date, str) and allocation_date:
-            resolved_allocation_date = allocation_date
-        elif chain_start_stamp_id is None:
-            resolved_allocation_date = timestamp_utc.date().isoformat()
+        if chain_start_stamp_id is None:
+            if isinstance(allocation_date, str) and allocation_date:
+                resolved_allocation_date = allocation_date
+            else:
+                resolved_allocation_date = timestamp_utc.date().isoformat()
 
         if resolved_allocation_date:
             payload["allocationDate"] = resolved_allocation_date
