@@ -207,6 +207,7 @@ class CrewmeisterClient:
         response = await self.async_api_request(method, path, **kwargs)
         if response.status >= 400:
             body = await self._safe_read_json(response)
+            detail = _extract_error_detail(body)
             _LOGGER.debug(
                 "Crewmeister API request failed: method=%s path=%s status=%s body=%s",
                 method,
@@ -214,6 +215,10 @@ class CrewmeisterClient:
                 response.status,
                 body,
             )
+            if detail:
+                raise CrewmeisterError(
+                    f"Crewmeister API returned {response.status}: {detail}"
+                )
             raise CrewmeisterError(f"Crewmeister API returned {response.status}")
         return await response.json()
 
@@ -382,6 +387,43 @@ class CrewmeisterClient:
             return await response.text()
         except Exception:  # pragma: no cover - defensive
             return None
+
+
+def _extract_error_detail(body: Any) -> str | None:
+    """Return a readable error detail from a failed API response."""
+
+    if not body:
+        return None
+
+    if isinstance(body, str):
+        return body
+
+    if isinstance(body, dict):
+        for key in ("message", "error", "error_description", "detail", "title", "reason"):
+            value = body.get(key)
+            if isinstance(value, str) and value:
+                return value
+        errors = body.get("errors")
+        if isinstance(errors, list):
+            messages: list[str] = []
+            for item in errors:
+                if isinstance(item, str) and item:
+                    messages.append(item)
+                elif isinstance(item, dict):
+                    message = item.get("message")
+                    if isinstance(message, str) and message:
+                        messages.append(message)
+            if messages:
+                return "; ".join(messages)
+        if "errorCode" in body and isinstance(body["errorCode"], str):
+            return body["errorCode"]
+
+    if isinstance(body, list):
+        parts = [str(item) for item in body if item]
+        if parts:
+            return "; ".join(parts)
+
+    return None
 
 
 def decode_jwt_payload(token: str) -> dict[str, Any]:
