@@ -101,6 +101,7 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         stamp_type = self.entity_description.stamp_type
         status = self.coordinator.data.get("status") if isinstance(self.coordinator.data, dict) else None
         self._ensure_valid_transition(stamp_type, status)
+        stamp_kwargs = self._prepare_stamp_kwargs(stamp_type, status)
         stamp_kwargs = self._derive_stamp_kwargs(stamp_type=stamp_type, status=status)
         stamp_kwargs = self._derive_stamp_kwargs(stamp_type, status)
         stamp_kwargs = self._derive_stamp_kwargs()
@@ -121,6 +122,10 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         if status is None:
             return
 
+
+        if status is None:
+            return
+
         if stamp_type == STAMP_TYPE_START_WORK:
             if status == "clocked_in":
                 raise HomeAssistantError("Failed to trigger Crewmeister stamp: already clocked in")
@@ -131,6 +136,10 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
             if status not in {"clocked_in", "on_break"}:
                 raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift to clock out from")
 
+    def _prepare_stamp_kwargs(
+        self, stamp_type: str, status: str | None
+    ) -> dict[str, object]:
+        """Build the payload for a new stamp based on the latest coordinator data."""
     def _derive_stamp_kwargs(self) -> dict[str, object]:
         """Return payload parameters derived from the latest stamp."""
 
@@ -182,6 +191,13 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         elif stamp_type in (STAMP_TYPE_START_BREAK, STAMP_TYPE_CLOCK_OUT):
             include_chain = True
 
+        if include_chain and chain_start is None:
+            message = (
+                "Failed to trigger Crewmeister stamp: no active shift found"
+                if stamp_type != STAMP_TYPE_START_WORK
+                else "Failed to trigger Crewmeister stamp: unable to resume break"
+            )
+            raise HomeAssistantError(message)
         if include_chain:
             if chain_start is None:
                 message = (
@@ -197,6 +213,31 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
             if isinstance(allocation_date, str) and allocation_date:
                 kwargs["allocation_date"] = allocation_date
         return kwargs
+
+    def _derive_stamp_kwargs(
+        self,
+        stamp_type: str | None = None,
+        status: str | None = None,
+    ) -> dict[str, object]:
+        """Return payload parameters derived from the latest stamp.
+
+        ``stamp_type`` and ``status`` are optional so legacy calls that do not pass
+        arguments continue to work. When omitted we pull the data from the entity
+        description and coordinator snapshot respectively.
+        """
+
+        resolved_stamp_type = stamp_type or self.entity_description.stamp_type
+        resolved_status = status
+        if resolved_status is None and isinstance(self.coordinator.data, dict):
+            resolved_status = self.coordinator.data.get("status")
+
+        return self._prepare_stamp_kwargs(resolved_stamp_type, resolved_status)
+
+    @staticmethod
+    def _extract_chain_start(latest_stamp: dict[str, object] | None) -> int | None:
+        if not latest_stamp:
+            return None
+
 
     @staticmethod
     def _extract_chain_start(latest_stamp: dict[str, object] | None) -> int | None:
