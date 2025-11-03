@@ -124,6 +124,7 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
             return {}
 
         chain_start: int | None = latest_stamp.get("chainStartStampId")
+        allocation_date = latest_stamp.get("allocationDate")
         if not isinstance(chain_start, int):
             candidate = latest_stamp.get("id")
             if isinstance(candidate, int):
@@ -136,6 +137,9 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
             include_chain = True
 
         if include_chain and chain_start is not None:
-            return {"chain_start_stamp_id": chain_start}
+            kwargs: dict[str, object] = {"chain_start_stamp_id": chain_start}
+            if isinstance(allocation_date, str) and allocation_date:
+                kwargs["allocation_date"] = allocation_date
+            return kwargs
 
         return {}
