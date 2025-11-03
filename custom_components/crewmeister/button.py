@@ -170,6 +170,12 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
             kwargs["chain_start_stamp_id"] = chain_start
             if isinstance(allocation_date, str) and allocation_date:
                 kwargs["allocation_date"] = allocation_date
+        elif include_chain:
+            # If we cannot determine the chain start locally we let the API
+            # resolve the correct relationship instead of blocking the request.
+            # This mirrors the behaviour prior to the refactor and avoids
+            # breaking flows when the coordinator snapshot is stale.
+            return {}
 
         return kwargs
 
