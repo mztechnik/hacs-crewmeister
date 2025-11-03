@@ -269,8 +269,6 @@ class CrewmeisterClient:
         location: str | None = None,
         time_account_id: int | None = None,
         time_category_ids: dict[str, int | None] | None = None,
-        chain_start_stamp_id: int | None = None,
-        allocation_date: str | None = None,
     ) -> CrewmeisterStamp:
         """Create a new stamp for the authenticated user."""
 
@@ -289,33 +287,14 @@ class CrewmeisterClient:
             "timestamp": timestamp_utc.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         }
 
-        # ``allocationDate`` is managed by the backend once a stamp chain exists.
-        # Passing a different value for follow-up stamps triggers a 400 error, so we
-        # only include it for new chains. When a chain is already known we ignore any
-        # value supplied by callers and let the server reuse the existing one.
-        resolved_allocation_date: str | None = None
-        if chain_start_stamp_id is None:
-            if isinstance(allocation_date, str) and allocation_date:
-                resolved_allocation_date = allocation_date
-            else:
-                resolved_allocation_date = timestamp_utc.date().isoformat()
-
-        if resolved_allocation_date:
-            payload["allocationDate"] = resolved_allocation_date
         if note:
             payload["note"] = note
         if location:
             payload["location"] = location
-        # According to the Crewmeister API documentation, ``chainStartStampId`` must be
-        # preserved for follow-up stamps that belong to an existing chain (e.g. breaks or
-        # clock-out events). When provided we forward it, otherwise the backend assigns
-        # the value automatically for new chains such as clock-in events.
-        if chain_start_stamp_id is not None:
-            payload["chainStartStampId"] = chain_start_stamp_id
-        # The API documentation states that ``chainStartStampId`` is assigned internally
-        # and must not be modified by clients when creating new stamps. The Crewmeister
-        # backend derives the correct chain automatically based on the authenticated user
-        # and current open stamps, so we intentionally avoid sending that property.
+        # The Crewmeister backend derives the correct chain relationships based on the
+        # authenticated user and current open shift, so we intentionally avoid sending
+        # ``chainStartStampId`` from the integration. Doing so prevents 400 errors when
+        # the locally cached state becomes stale.
         if time_account_id is not None:
             payload["timeAccountId"] = time_account_id
         if time_category_ids:

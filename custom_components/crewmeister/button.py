@@ -59,9 +59,16 @@ async def async_setup_entry(
     runtime_data = hass.data[DOMAIN][entry.entry_id]
     coordinator: CrewmeisterStatusCoordinator = runtime_data["coordinator"]
     client: CrewmeisterClient = runtime_data["client"]
+    stamp_defaults: dict[str, object] = runtime_data.get("stamp_defaults", {})
 
     entities = [
-        CrewmeisterStampButton(coordinator, client, entry.entry_id, description)
+        CrewmeisterStampButton(
+            coordinator,
+            client,
+            entry.entry_id,
+            description,
+            stamp_defaults,
+        )
         for description in BUTTON_DESCRIPTIONS
     ]
     async_add_entities(entities)
@@ -78,12 +85,14 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         client: CrewmeisterClient,
         entry_id: str,
         description: CrewmeisterButtonEntityDescription,
+        stamp_defaults: dict[str, object] | None = None,
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = description
         self._client = client
         self._entry_id = entry_id
         self._attr_unique_id = f"{entry_id}_{description.key}"
+        self._stamp_defaults = stamp_defaults or {}
 
     @property
     def device_info(self) -> DeviceInfo | None:
@@ -106,10 +115,17 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         )
 
         self._ensure_valid_transition(stamp_type, status)
-        stamp_kwargs = self._derive_stamp_kwargs(stamp_type, status)
+        note = self._stamp_defaults.get("note")
+        note = note if isinstance(note, str) else None
+        time_account_id = self._stamp_defaults.get("time_account_id")
+        time_account_id = time_account_id if isinstance(time_account_id, int) else None
 
         try:
-            await self._client.async_create_stamp(stamp_type, **stamp_kwargs)
+            await self._client.async_create_stamp(
+                stamp_type,
+                note=note,
+                time_account_id=time_account_id,
+            )
         except CrewmeisterError as err:
             raise HomeAssistantError(
                 f"Failed to trigger Crewmeister stamp: {err}"
@@ -138,88 +154,3 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
                 raise HomeAssistantError(
                     "Failed to trigger Crewmeister stamp: no active shift to clock out from"
                 )
-
-    def _prepare_stamp_kwargs(
-        self, stamp_type: str, status: str | None
-    ) -> dict[str, object]:
-        """Build the payload for a new stamp based on the latest coordinator data."""
-
-        data = self.coordinator.data if isinstance(self.coordinator.data, dict) else None
-        latest_stamp = data.get("latest_stamp") if isinstance(data, dict) else None
-        latest_stamp = latest_stamp if isinstance(latest_stamp, dict) else None
-
-        chain_start = self._extract_chain_start(latest_stamp)
-        include_chain = False
-        if stamp_type == STAMP_TYPE_START_WORK:
-            include_chain = status == "on_break"
-        elif stamp_type in (STAMP_TYPE_START_BREAK, STAMP_TYPE_CLOCK_OUT):
-            include_chain = True
-
-        if include_chain and chain_start is None:
-            message = (
-                "Failed to trigger Crewmeister stamp: no active shift found"
-                if stamp_type != STAMP_TYPE_START_WORK
-                else "Failed to trigger Crewmeister stamp: unable to resume break"
-            )
-            raise HomeAssistantError(message)
-
-        kwargs: dict[str, object] = {}
-        if include_chain and chain_start is not None:
-            kwargs["chain_start_stamp_id"] = chain_start
-        elif include_chain:
-            # If we cannot determine the chain start locally we let the API
-            # resolve the correct relationship instead of blocking the request.
-            # This mirrors the behaviour prior to the refactor and avoids
-            # breaking flows when the coordinator snapshot is stale.
-            return {}
-
-        return kwargs
-
-    def _derive_stamp_kwargs(
-        self,
-        stamp_type: str | None = None,
-        status: str | None = None,
-    ) -> dict[str, object]:
-        """Return payload parameters derived from the latest stamp.
-
-        ``stamp_type`` and ``status`` are optional so legacy calls that do not pass
-        arguments continue to work. When omitted we pull the data from the entity
-        description and coordinator snapshot respectively.
-        """
-
-        resolved_stamp_type = stamp_type or self.entity_description.stamp_type
-        resolved_status = status
-        if resolved_status is None and isinstance(self.coordinator.data, dict):
-            resolved_status = self.coordinator.data.get("status")
-
-        return self._prepare_stamp_kwargs(resolved_stamp_type, resolved_status)
-
-    @staticmethod
-    def _extract_chain_start(latest_stamp: dict[str, object] | None) -> int | None:
-        if not latest_stamp:
-            return None
-
-        raw_value = latest_stamp.get("chainStartStampId")
-        if raw_value is None:
-            raw_value = latest_stamp.get("chain_start_stamp_id")  # defensive
-
-        value = CrewmeisterStampButton._coerce_int(raw_value)
-        if value is not None:
-            return value
-
-        # Some API responses omit ``chainStartStampId`` on the first stamp of a chain
-        # but include the ``id`` of that stamp. Falling back to the ``id`` ensures we
-        # can continue the chain while respecting the documented constraint that the
-        # start identifier must remain stable across follow-up stamps.
-        return CrewmeisterStampButton._coerce_int(latest_stamp.get("id"))
-
-    @staticmethod
-    def _coerce_int(value: object) -> int | None:
-        if isinstance(value, int):
-            return value
-        if isinstance(value, str):
-            try:
-                return int(value)
-            except ValueError:
-                return None
-        return None
