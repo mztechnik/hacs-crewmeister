@@ -115,6 +115,7 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         )
 
         self._ensure_valid_transition(stamp_type, status)
+        stamp_kwargs = self._derive_stamp_kwargs(stamp_type, status)
         note = self._stamp_defaults.get("note")
         note = note if isinstance(note, str) else None
         time_account_id = self._stamp_defaults.get("time_account_id")
@@ -125,6 +126,7 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
                 stamp_type,
                 note=note,
                 time_account_id=time_account_id,
+                **stamp_kwargs,
             )
         except CrewmeisterError as err:
             raise HomeAssistantError(

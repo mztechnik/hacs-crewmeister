@@ -269,6 +269,7 @@ class CrewmeisterClient:
         location: str | None = None,
         time_account_id: int | None = None,
         time_category_ids: dict[str, int | None] | None = None,
+        chain_start_stamp_id: int | None = None,
     ) -> CrewmeisterStamp:
         """Create a new stamp for the authenticated user."""
 
