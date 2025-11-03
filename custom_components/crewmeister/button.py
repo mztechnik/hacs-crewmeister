@@ -149,8 +149,6 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         latest_stamp = latest_stamp if isinstance(latest_stamp, dict) else None
 
         chain_start = self._extract_chain_start(latest_stamp)
-        allocation_date = latest_stamp.get("allocationDate") if latest_stamp else None
-
         include_chain = False
         if stamp_type == STAMP_TYPE_START_WORK:
             include_chain = status == "on_break"
@@ -168,8 +166,6 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         kwargs: dict[str, object] = {}
         if include_chain and chain_start is not None:
             kwargs["chain_start_stamp_id"] = chain_start
-            if isinstance(allocation_date, str) and allocation_date:
-                kwargs["allocation_date"] = allocation_date
         elif include_chain:
             # If we cannot determine the chain start locally we let the API
             # resolve the correct relationship instead of blocking the request.
