@@ -292,6 +292,12 @@ class CrewmeisterClient:
             payload["note"] = note
         if location:
             payload["location"] = location
+        # According to the Crewmeister API documentation, ``chainStartStampId`` must be
+        # preserved for follow-up stamps that belong to an existing chain (e.g. breaks or
+        # clock-out events). When provided we forward it, otherwise the backend assigns
+        # the value automatically for new chains such as clock-in events.
+        if chain_start_stamp_id is not None:
+            payload["chainStartStampId"] = chain_start_stamp_id
         # The API documentation states that ``chainStartStampId`` is assigned internally
         # and must not be modified by clients when creating new stamps. The Crewmeister
         # backend derives the correct chain automatically based on the authenticated user

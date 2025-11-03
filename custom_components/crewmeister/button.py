@@ -101,6 +101,7 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         stamp_type = self.entity_description.stamp_type
         status = self.coordinator.data.get("status") if isinstance(self.coordinator.data, dict) else None
         self._ensure_valid_transition(stamp_type, status)
+        stamp_kwargs = self._derive_stamp_kwargs(stamp_type, status)
         stamp_kwargs = self._derive_stamp_kwargs()
 
         try:
@@ -128,15 +129,80 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
     def _derive_stamp_kwargs(self) -> dict[str, object]:
         """Return payload parameters derived from the latest stamp."""
 
-        if not isinstance(self.coordinator.data, dict):
-            return {}
+        if status is None:
+            return
 
-        latest_stamp = self.coordinator.data.get("latest_stamp")
-        if not isinstance(latest_stamp, dict):
-            return {}
+        if stamp_type == STAMP_TYPE_START_WORK:
+            if status == "clocked_in":
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: already clocked in")
+        elif stamp_type == STAMP_TYPE_START_BREAK:
+            if status != "clocked_in":
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift to pause")
+        elif stamp_type == STAMP_TYPE_CLOCK_OUT:
+            if status not in {"clocked_in", "on_break"}:
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift to clock out from")
 
+    def _derive_stamp_kwargs(self, stamp_type: str, status: str | None) -> dict[str, object]:
+        """Return payload parameters derived from the latest stamp."""
+
+        data = self.coordinator.data if isinstance(self.coordinator.data, dict) else None
+        latest_stamp = data.get("latest_stamp") if isinstance(data, dict) else None
+        latest_stamp = latest_stamp if isinstance(latest_stamp, dict) else None
+
+        chain_start = self._extract_chain_start(latest_stamp)
+        allocation_date = latest_stamp.get("allocationDate") if latest_stamp else None
+
+        include_chain = False
+        if stamp_type == STAMP_TYPE_START_WORK:
+            include_chain = status == "on_break"
+        elif stamp_type in (STAMP_TYPE_START_BREAK, STAMP_TYPE_CLOCK_OUT):
+            include_chain = True
+
+        if include_chain:
+            if chain_start is None:
+                message = (
+                    "Failed to trigger Crewmeister stamp: no active shift found"
+                    if stamp_type != STAMP_TYPE_START_WORK
+                    else "Failed to trigger Crewmeister stamp: unable to resume break"
+                )
+                raise HomeAssistantError(message)
+
+        kwargs: dict[str, object] = {}
+        if include_chain and chain_start is not None:
+            kwargs["chain_start_stamp_id"] = chain_start
+            if isinstance(allocation_date, str) and allocation_date:
+                kwargs["allocation_date"] = allocation_date
+        return kwargs
+
+    @staticmethod
+    def _extract_chain_start(latest_stamp: dict[str, object] | None) -> int | None:
+        if not latest_stamp:
+            return None
         allocation_date = latest_stamp.get("allocationDate")
         if isinstance(allocation_date, str) and allocation_date:
             return {"allocation_date": allocation_date}
 
-        return {}
+        raw_value = latest_stamp.get("chainStartStampId")
+        if raw_value is None:
+            raw_value = latest_stamp.get("chain_start_stamp_id")  # defensive
+
+        value = CrewmeisterStampButton._coerce_int(raw_value)
+        if value is not None:
+            return value
+
+        # Some API responses omit ``chainStartStampId`` on the first stamp of a chain
+        # but include the ``id`` of that stamp. Falling back to the ``id`` ensures we
+        # can continue the chain while respecting the documented constraint that the
+        # start identifier must remain stable across follow-up stamps.
+        return CrewmeisterStampButton._coerce_int(latest_stamp.get("id"))
+
+    @staticmethod
+    def _coerce_int(value: object) -> int | None:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                return None
+        return None

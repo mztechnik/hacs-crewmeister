@@ -13,8 +13,7 @@ create_stamp:
     timestamp:
       translation_key: timestamp
       selector:
-        datetime:
-          with_time: true
+        datetime: {}
     note:
       translation_key: note
       selector:
