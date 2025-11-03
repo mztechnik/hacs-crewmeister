@@ -157,6 +157,14 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
         elif stamp_type in (STAMP_TYPE_START_BREAK, STAMP_TYPE_CLOCK_OUT):
             include_chain = True
 
+        if include_chain and chain_start is None:
+            message = (
+                "Failed to trigger Crewmeister stamp: no active shift found"
+                if stamp_type != STAMP_TYPE_START_WORK
+                else "Failed to trigger Crewmeister stamp: unable to resume break"
+            )
+            raise HomeAssistantError(message)
+
         kwargs: dict[str, object] = {}
         if include_chain and chain_start is not None:
             kwargs["chain_start_stamp_id"] = chain_start
