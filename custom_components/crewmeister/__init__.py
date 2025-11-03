@@ -131,6 +131,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data[CONF_PASSWORD],
         identity=identity,
         token_payload=token_payload,
+        language=hass.config.language,
     )
 
     coordinator = CrewmeisterStatusCoordinator(hass, client, update_interval=_resolve_update_interval(entry))

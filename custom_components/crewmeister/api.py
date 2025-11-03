@@ -98,6 +98,8 @@ class CrewmeisterClient:
         identity: CrewmeisterIdentity | None = None,
         token: str | None = None,
         token_payload: dict[str, Any] | None = None,
+        *,
+        language: str | None = None,
     ) -> None:
         self._session = session
         self._base_url = base_url.rstrip("/")
@@ -108,6 +110,12 @@ class CrewmeisterClient:
         self._token_payload = token_payload or {}
         self._token_expiration: datetime | None = self._extract_token_expiration(self._token_payload)
         self._absence_types: dict[int, dict[str, Any]] = {}
+        self._language = _normalize_language(language)
+
+    def set_language(self, language: str | None) -> None:
+        """Update the preferred language for API requests."""
+
+        self._language = _normalize_language(language)
 
     @property
     def identity(self) -> CrewmeisterIdentity | None:
@@ -176,6 +184,8 @@ class CrewmeisterClient:
         headers = kwargs.pop("headers", {})
         headers.setdefault("Authorization", f"Bearer {self._token}")
         headers.setdefault("Accept", "application/json")
+        if self._language:
+            headers.setdefault("Accept-Language", self._language)
         if "json" in kwargs:
             headers.setdefault("Content-Type", "application/json")
         url = self._build_url(path)
@@ -253,6 +263,9 @@ class CrewmeisterClient:
         timestamp: datetime | None = None,
         note: str | None = None,
         location: str | None = None,
+        chain_start_stamp_id: int | None = None,
+        time_account_id: int | None = None,
+        time_category_ids: dict[str, int | None] | None = None,
     ) -> CrewmeisterStamp:
         """Create a new stamp for the authenticated user."""
 
@@ -265,6 +278,7 @@ class CrewmeisterClient:
         stamp_status = STAMP_STATUS_BY_TYPE.get(stamp_type)
 
         payload: dict[str, Any] = {
+            "@type": "com.crewmeister/Stamp",
             "crewId": identity.crew_id,
             "userId": identity.user_id,
             "stampType": stamp_type,
@@ -277,6 +291,14 @@ class CrewmeisterClient:
             payload["note"] = note
         if location:
             payload["location"] = location
+        if chain_start_stamp_id is not None:
+            payload["chainStartStampId"] = chain_start_stamp_id
+        if time_account_id is not None:
+            payload["timeAccountId"] = time_account_id
+        if time_category_ids:
+            for key, value in time_category_ids.items():
+                if value is not None:
+                    payload[key] = value
 
         data = await self._request_json("POST", STAMPS_ENDPOINT, json=payload)
         # The API returns a SyncWriteResponse structure with resourceAfterWrite
@@ -336,6 +358,9 @@ class CrewmeisterClient:
         info = await self.async_get_absence_type(type_id)
         if not info:
             return None
+        translation = _extract_translated_name(info, self._language)
+        if translation:
+            return translation
         return info.get("name") or info.get("displayName") or info.get("absenceTypeName")
 
     @staticmethod
@@ -419,3 +444,59 @@ def _extract_identity_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
             break
 
     return identity
+
+
+def _normalize_language(language: str | None) -> str | None:
+    """Return a language tag in the format expected by the API."""
+
+    if not language:
+        return None
+    tag = language.replace("_", "-")
+    return tag.strip() or None
+
+
+def _extract_translated_name(data: dict[str, Any], language: str | None) -> str | None:
+    """Best-effort extraction of a localized absence type name."""
+
+    if not language:
+        return None
+
+    candidates: list[str] = []
+    lang_lower = language.lower()
+    lang_primary = lang_lower.split("-", 1)[0]
+
+    translations = data.get("translations")
+    if isinstance(translations, dict):
+        candidates.extend(_iter_translation_matches(translations, lang_lower, lang_primary))
+
+    name_translations = data.get("nameTranslations")
+    if isinstance(name_translations, dict):
+        candidates.extend(_iter_translation_matches(name_translations, lang_lower, lang_primary))
+
+    localized = data.get("displayNameLocalized") or data.get("nameLocalized")
+    if isinstance(localized, str) and localized:
+        return localized
+
+    for candidate in candidates:
+        if candidate:
+            return candidate
+    return None
+
+
+def _iter_translation_matches(
+    translations: dict[str, Any],
+    lang_lower: str,
+    lang_primary: str,
+) -> list[str]:
+    """Collect translation matches for the desired language codes."""
+
+    matches: list[str] = []
+    for key, value in translations.items():
+        if not isinstance(value, str) or not value:
+            continue
+        key_lower = str(key).lower()
+        if key_lower == lang_lower or key_lower.replace("_", "-") == lang_lower:
+            matches.append(value)
+        elif key_lower == lang_primary or key_lower.split("-", 1)[0] == lang_primary:
+            matches.append(value)
+    return matches
