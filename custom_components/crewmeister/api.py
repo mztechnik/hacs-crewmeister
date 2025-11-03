@@ -267,7 +267,6 @@ class CrewmeisterClient:
         timestamp: datetime | None = None,
         note: str | None = None,
         location: str | None = None,
-        chain_start_stamp_id: int | None = None,
         time_account_id: int | None = None,
         time_category_ids: dict[str, int | None] | None = None,
         allocation_date: str | None = None,
@@ -293,8 +292,10 @@ class CrewmeisterClient:
             payload["note"] = note
         if location:
             payload["location"] = location
-        if chain_start_stamp_id is not None:
-            payload["chainStartStampId"] = chain_start_stamp_id
+        # The API documentation states that ``chainStartStampId`` is assigned internally
+        # and must not be modified by clients when creating new stamps. The Crewmeister
+        # backend derives the correct chain automatically based on the authenticated user
+        # and current open stamps, so we intentionally avoid sending that property.
         if time_account_id is not None:
             payload["timeAccountId"] = time_account_id
         if time_category_ids:
