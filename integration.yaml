@@ -1,0 +1,2323 @@
+---
+components:
+  parameters:
+    XAsyncWrite:
+      description: "Set to `true` to execute the write operation asynchronously.\n\
+        If omitted or set to `false`, the operation will be executed synchronously."
+      in: "header"
+      name: "X-Write-Async"
+      required: false
+      schema:
+        default: false
+        type: "boolean"
+    XCallerContextHeader:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CallerContext"
+      description: "JSON‐encoded **CallerContext** object.  \nSee the **CallerContext\
+        \ Schema** for full details."
+      in: "header"
+      name: "X-Caller-Context"
+      required: false
+  schemas:
+    Action:
+      description: "The write action to be performed. CREATE creates a new resource.\
+        \ REPLACE completely replaces an existing resource, identified by an id, with\
+        \ a given resource. PATCH changes the values of given properties for an existing\
+        \ resource, identified by an id. DELETE delets one existing resource, identified\
+        \ by an id."
+      enum:
+      - "CREATE"
+      - "REPLACE"
+      - "PATCH"
+      - "DELETE"
+      type: "string"
+    ApiError:
+      description: "Returned when an API request fails. Explains what went wrong and\
+        \ provides details for troubleshooting."
+      properties:
+        Code:
+          description: "The code indicates what causes the issue and how it can potentially\
+            \ prevented in a generic way.\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+          enum:
+          - "INVALID_ARGUMENT"
+          - "NOT_FOUND"
+          - "CANCELLED"
+          - "ALREADY_EXISTS"
+          - "UNAUTHENTICATED"
+          - "PERMISSION_DENIED"
+          - "RESOURCE_EXHAUSTED"
+          - "FAILED_PRECONDITION"
+          - "OUT_OF_RANGE"
+          - "ABORTED"
+          - "INTERNAL"
+          - "UNAVAILABLE"
+          - "DEADLINE_EXCEEDED"
+          - "UNKNOWN"
+          - "UNIMPLEMENTED"
+          - "DATA_LOSS"
+          - "UNSUPPORTED_MEDIA_TYPE"
+          type: "string"
+        Details:
+          description: "A key/value map with extra, machine-readable information about\
+            \ the error (e.g. which field was invalid).\n\n- **Nullable**: false \n\
+            - **Read-only**: false"
+        Message:
+          description: "The message explains why an error happened and how it can\
+            \ be fixed. The message is meant for reading by humans only and must not\
+            \ be used to build logic around it. The message can change without further\
+            \ notice.\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: "some Text"
+          type: "string"
+        Request ID:
+          description: "The request id uniquely identifies the request that caused\
+            \ the error. It can be helpful for the Crewmeister team to better understand\
+            \ the cause of an issue.\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: "some Text"
+          type: "string"
+        Type:
+          description: "The type of an error is either REQUEST or PROCESSING. REQUEST\
+            \ errors are rejected by the API because it either cannot understand the\
+            \ request or finds the request to be invalid. PROCESSING errors are returned\
+            \ if the request was found valid, but the API was not able to successfully\
+            \ process it.\n\n- **Nullable**: false \n- **Read-only**: false"
+          enum:
+          - "REQUEST"
+          - "PROCESSING"
+          type: "string"
+      type: "object"
+    AsyncWriteResponse:
+      description: "Gives you a Job to track your async write operation."
+      properties:
+        job:
+          $ref: "#/components/schemas/Job"
+          description: "The Job you can check: not started, running, succeeded (with\
+            \ results), or failed (with error).\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+      type: "object"
+    Authentication:
+      description: "Defines who is calling the API, mainly impacting which permissions\
+        \ are granted on Resources."
+      properties:
+        ID:
+          description: "A unique identifier within the given authentication type.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: "some Text"
+          type: "string"
+        Type:
+          description: "The kind of caller: USER (individual), CREW (company), or\
+            \ SYSTEM (internal service account).\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+          enum:
+          - "USER"
+          - "CREW"
+          - "SYSTEM"
+          type: "string"
+      type: "object"
+    CallerContext:
+      description: "Carries information about who is calling the API and under which\
+        \ conditions."
+      properties:
+        actingContext:
+          $ref: "#/components/schemas/CallerContext"
+          description: "An alternate context to \"impersonate\" API calls; if set,\
+            \ the API behaves according to this context (or the actingContext inside\
+            \ of this etc.)\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: "{\n  \"authentication\": {\n    \"id\": \"1234\",\n    \"type\"\
+            : \"USER\"\n  },\n  \"clientAppId\": \"com.crewmeister.clients.browser-app.single-user\"\
+            ,\n  \"clientDevice\": \"DESKTOP\"\n}\n"
+        authentication:
+          $ref: "#/components/schemas/Authentication"
+          description: "Who is making the call. If not provided, an anonymous call\
+            \ is assumed.\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: "{\n  \"id\": \"1234\",\n  \"type\": \"USER\"\n}\n"
+        clientAppId:
+          description: "Which client app made the call (e.g. browser single-user,\
+            \ terminal, employee app).\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+          enum:
+          - "SINGLE_USER"
+          - "TERMINAL"
+          - "EMPLOYEE_APP"
+          type: "string"
+        clientDevice:
+          description: "The device type of the caller: PHONE, TABLET, or DESKTOP.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          enum:
+          - "PHONE"
+          - "TABLET"
+          - "DESKTOP"
+          type: "string"
+        isLegacyCall:
+          description: "true if the call came from an old-style v2 client (temporary\
+            \ flag).\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: true
+          type: "boolean"
+      type: "object"
+    ClientAppIdType:
+      description: "The client app ID is used to identify the application making the\
+        \ request. This can be useful for logging, analytics, or applying specific\
+        \ business logic based on the client app."
+      enum:
+      - "SINGLE_USER"
+      - "TERMINAL"
+      - "EMPLOYEE_APP"
+      type: "string"
+    ClientDeviceType:
+      description: "The client device type is used to identify the type of device\
+        \ making the request. This can be useful for logging, analytics, or applying\
+        \ specific business logic based on the client device."
+      enum:
+      - "PHONE"
+      - "TABLET"
+      - "DESKTOP"
+      type: "string"
+    Connection:
+      description: "Connection resources represent established OAuth 2.0 links to\
+        \ external services, storing credentials like access/refresh tokens and associated\
+        \ metadata. Use these operations to manage the lifecycle of these connections,\
+        \ including creation, retrieval of details, updates (e.g., token refresh),\
+        \ and deletion."
+      properties:
+        accessToken:
+          description: "OAuth access token for the service\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          example: "some Text"
+          type: "string"
+        accessTokenExpiresAt:
+          description: "Timestamp when the access token expires\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "2025-05-30T12:20:20Z"
+          type: "string"
+        creatorName:
+          description: "Name of the user who created the connection\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "John Doe"
+          type: "string"
+        crewId:
+          description: "Identifier for the crew the connection belongs to\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false \n- **Validations**: `Crew must be valid\
+            \ and active`"
+          example: "352"
+          type: "integer"
+        id:
+          description: "Unique identifier for the connection\n\n- **Nullable**: false\
+            \ \n- **Read-only**: true"
+          example: 312
+          type: "integer"
+        metadata:
+          description: "Connection metadata\n\n- **Nullable**: true \n- **Read-only**:\
+            \ false"
+        oauthServiceName:
+          description: "Name of the OAuth service this connection is for\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          enum:
+          - "DATEV"
+          example: "DATEV"
+          type: "string"
+        refreshToken:
+          description: "OAuth refresh token for the service\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          example: "some Text"
+          type: "string"
+        refreshTokenExpiresAt:
+          description: "Timestamp when the refresh token expires\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "2025-05-30T12:20:20Z"
+          type: "string"
+        userId:
+          description: "Identifier of the user who created the connection\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false \n- **Validations**: `Active userId in\
+            \ the crewId`"
+          example: "644"
+          type: "integer"
+      type: "object"
+    HttpWriteRequest:
+      properties:
+        body:
+          description: "If the method is POST or PUT, the body must be a resource\
+            \ to create/replace. If the method is DELETE, the body must be empty.\
+            \ If the method is PATCH, the body is a map with the properties to patch\
+            \ and the respective values."
+        method:
+          enum:
+          - "POST"
+          - "PUT"
+          - "PATCH"
+          - "DELETE"
+          type: "string"
+        path:
+          description: "If the method is POST, leave the path empty/null. If the method\
+            \ is PATCH, PUT or DELETE, this must be the path to the resource."
+          example: "/1"
+          type: "string"
+      type: "object"
+    HttpWriteRequestObject:
+      description: "Represents one HTTP-style write call for a Resource—useful when\
+        \ batching writes over the REST API."
+      properties:
+        body:
+          description: "The request payload: a full Resource JSON for POST/PUT, a\
+            \ map of changes for PATCH, or empty for DELETE.\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          type: "object"
+        method:
+          description: "The HTTP verb for this write: POST = create, PUT = replace,\
+            \ PATCH = patch, DELETE = delete a Resource.\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          enum:
+          - "POST"
+          - "PUT"
+          - "PATCH"
+          - "DELETE"
+          type: "string"
+        path:
+          description: "The URL for the write. Use the the resource's collection endpoint,\
+            \ appending /id is required for all methods expect of POST.\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "some Text"
+          type: "string"
+        scheduledAt:
+          description: "In case this is intended to be an async write operation: When\
+            \ to run this call. null means run it immediately; otherwise the given\
+            \ timestamp is when it should fire.\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+          example: "2025-05-01T12:20:20Z"
+          type: "string"
+      type: "object"
+    HttpWriteResponseObject:
+      description: "Holds the HTTP response details from a single write call."
+      properties:
+        body:
+          description: "In case of a success, the WriteResponse. In case of an error,\
+            \ the ApiError.\n\n- **Nullable**: false \n- **Read-only**: false"
+          type: "object"
+        headers:
+          description: "The HTTP response headers (key → value).\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+        statusCode:
+          description: "The HTTP status code (e.g. 200, 201, 204).\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: 491
+          type: "integer"
+      type: "object"
+    ICalSubscriptionTask:
+      description: "Task to create iCal subscriptions. You can use this task to create\
+        \ a subscription for a users's absence calendar. The task will return a feed\
+        \ URL that can be used to subscribe to the calendar. The crew id is required\
+        \ to identify the crew for which the subscription is created as well as the\
+        \ user id for which the subscription is created."
+      properties:
+        ICalSubscriptionTaskInput:
+          $ref: "#/components/schemas/ICalSubscriptionTaskInput"
+        ICalSubscriptionTaskOutput:
+          $ref: "#/components/schemas/ICalSubscriptionTaskOutput"
+      type: "object"
+    Job:
+      description: "A job represents an asynchronous write operation on other resources."
+      properties:
+        apiError:
+          $ref: "#/components/schemas/ApiError"
+          description: "The error that occurred during job execution, if any.\n\n\
+            - **Nullable**: false \n- **Read-only**: false"
+        authentication:
+          $ref: "#/components/schemas/Authentication"
+          description: "The authentication information used to execute the job.\n\n\
+            - **Nullable**: false \n- **Read-only**: false"
+          example: "    {\n  \"id\": \"1234\",\n  \"type\": \"USER\"\n}\n"
+        callerContext:
+          $ref: "#/components/schemas/CallerContext"
+          description: "The caller context of the original request.\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "      {\n  \"authentication\": {\n    \"id\": \"1234\",\n    \"\
+            type\": \"USER\"\n  },\n  \"actingContext\": null,\n  \"clientAppId\"\
+            : \"com.crewmeister.clients.browser-app.single-user\",\n  \"clientDevice\"\
+            : \"DESKTOP\"\n}\n"
+        createdAt:
+          description: "The timestamp when the job was created.\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "2023-01-15T10:30:00Z"
+          type: "string"
+        id:
+          description: "The unique identifier of the job.\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          example: "job-123e4567-e89b-12d3-a456-426614174000"
+          type: "string"
+        processingGroups:
+          description: "The list of processing groups this job belongs to.\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          type: "object"
+        recurringDeadline:
+          description: "The deadline after which a recurring job should not be rescheduled\
+            \ anymore.\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: "2023-02-15T00:00:00Z"
+          type: "string"
+        recurringIntervalSeconds:
+          description: "The interval in seconds at which a recurring job should be\
+            \ rescheduled.\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: "3600"
+          type: "integer"
+        recurringPolicy:
+          description: "The policy to stop rescheduling a recurring job depending\
+            \ on the status.\n\n- **Nullable**: false \n- **Read-only**: false"
+          enum:
+          - "STOP_ON_ERROR"
+          - "STOP_ON_SUCCESS"
+          - "DO_NOT_STOP"
+          example: "STOP_ON_ERROR"
+          type: "string"
+        requests:
+          description: "The list of write requests to be executed by this job.\n\n\
+            - **Nullable**: false \n- **Read-only**: false"
+          type: "object"
+        responses:
+          description: "The list of responses from the executed write requests.\n\n\
+            - **Nullable**: false \n- **Read-only**: false"
+          type: "object"
+        retryCount:
+          description: "The number of times the job has been retried after a failure.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: "2"
+          type: "integer"
+        scheduledAt:
+          description: "The timestamp when the job is scheduled to be executed.\n\n\
+            - **Nullable**: false \n- **Read-only**: false"
+          example: "2023-01-16T14:00:00Z"
+          type: "string"
+        status:
+          description: "The current status of the job: WAITING, PROCESSING, SUCCESS,\
+            \ or ERROR.\n\n- **Nullable**: false \n- **Read-only**: false"
+          enum:
+          - "WAITING"
+          - "PROCESSING"
+          - "SUCCESS"
+          - "ERROR"
+          example: "SUCCESS"
+          type: "string"
+        updatedAt:
+          description: "The timestamp when the job was last updated.\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "2023-01-16T15:30:45Z"
+          type: "string"
+      type: "object"
+    OauthStatus:
+      description: "OauthStatus resources provide information about the current state\
+        \ of an OAuth connection for a specific service and user, indicating if it's\
+        \ active, disconnected, or expired. Use these operations primarily to retrieve\
+        \ the current connection status and related details like expiry times for\
+        \ monitoring and user feedback."
+      properties:
+        additionalData:
+          description: "Additional data related to the OAuth status\n\n- **Nullable**:\
+            \ true \n- **Read-only**: false"
+        creatorName:
+          description: "Name of the user who created the OAuth connection\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "John Doe"
+          type: "string"
+        crewId:
+          description: "Identifier for the crew the OAuth status belongs to\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false \n- **Validations**: `Crew must be valid\
+            \ and active`"
+          example: "352"
+          type: "integer"
+        expiringAt:
+          description: "Timestamp when the OAuth token expires\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: "2025-05-30T12:20:20Z"
+          type: "string"
+        serviceName:
+          description: "Name of the OAuth service this status is for\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          enum:
+          - "DATEV"
+          example: "DATEV"
+          type: "string"
+        status:
+          description: "Current status of the OAuth connection\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          enum:
+          - "CONNECTED"
+          - "DISCONNECTED"
+          - "EXPIRED"
+          example: "ACTIVE"
+          type: "string"
+        userId:
+          description: "Identifier of the user who created the OAuth connection\n\n\
+            - **Nullable**: false \n- **Read-only**: false \n- **Validations**: `Active\
+            \ userId in the crewId`"
+          example: "644"
+          type: "integer"
+      type: "object"
+    Order:
+      description: "Defines the sort order with respect to a single property of a\
+        \ resource."
+      properties:
+        Ignore case:
+          description: "Are upper and lower case considered equal when sorting?\n\n\
+            - **Nullable**: false \n- **Read-only**: false"
+          example: true
+          type: "boolean"
+        Sort direction:
+          description: "The direction in which the sort property was ordered by. ASC\
+            \ means that smaller values come before larger values. DESC means that\
+            \ larger values come before lower values.\n\n- **Nullable**: false \n\
+            - **Read-only**: false"
+          enum:
+          - "ASC"
+          - "DESC"
+          type: "string"
+        Sort property:
+          description: "The values of this property are taking to order the resources.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: "some Text"
+          type: "string"
+      type: "object"
+    Page:
+      description: "A single page of Resources from the API. Use it to fetch a slice\
+        \ of a large list—complete with navigation info (has next page, total pages,\
+        \ etc.)."
+      properties:
+        content:
+          description: "The list of Resources on this page.\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          type: "object"
+        hasContent:
+          description: "true if content isn't empty.\n\n- **Nullable**: false \n-\
+            \ **Read-only**: false"
+          example: true
+          type: "boolean"
+        hasNextPage:
+          description: "true if there's another page after this one (same sort order).\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: true
+          type: "boolean"
+        hasPreviousPage:
+          description: "true if there's a page before this one (same sort order).\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: true
+          type: "boolean"
+        isFirstPage:
+          description: "true if number == 0.\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+          example: true
+          type: "boolean"
+        isLastPage:
+          description: "true if this is the final page (no more Resources left).\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: true
+          type: "boolean"
+        number:
+          description: "Which page this is, starting at 0.\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          example: 491
+          type: "integer"
+        numberOfElements:
+          description: "How many Resources are in content.\n\n- **Nullable**: false\
+            \ \n- **Read-only**: false"
+          example: 491
+          type: "integer"
+        pageSize:
+          description: "The maximum Resources you asked for on each page.\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          example: 491
+          type: "integer"
+        sort:
+          $ref: "#/components/schemas/Sort"
+          description: "How the Resources were ordered before cutting out this page.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+        totalElements:
+          description: "How many Resources exist in total, across all pages.\n\n-\
+            \ **Nullable**: false \n- **Read-only**: false"
+          example: 312
+          type: "integer"
+        totalPages:
+          description: "How many pages you can get, given pageSize and totalElements.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: 491
+          type: "integer"
+      type: "object"
+    PageRequest:
+      description: "Defines how to ask for a \"page\" of Resources. Holds the page\
+        \ number, page size, and sort order you want when calling the API."
+      properties:
+        page:
+          description: "Which page of Resources to fetch, starting at 0 (first page).\
+            \ Default is 0.\n\n- **Nullable**: false \n- **Read-only**: false"
+          example: 491
+          type: "integer"
+        size:
+          description: "How many Resources to include on each page. Default is 20.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+          example: 491
+          type: "integer"
+        sort:
+          $ref: "#/components/schemas/Sort"
+          description: "How to order Resources before slicing out the page (e.g. name,asc).\
+            \ Use unsorted() for no specific order, which is also the default.\n\n\
+            - **Nullable**: false \n- **Read-only**: false"
+      type: "object"
+    Sort:
+      description: "Defines how resources are sorted before the content of a page\
+        \ is determined."
+      properties:
+        Orders:
+          description: "If the page was requested with a sort order, an array with\
+            \ order objects that tell how the resources were sorted to determine the\
+            \ page content. Otherwise, an empty array.\n\n- **Nullable**: false \n\
+            - **Read-only**: false"
+          type: "object"
+      type: "object"
+    SyncWriteResponse:
+      description: "Holds the state before and after a successful write of a resource,\
+        \ plus the original request that caused it."
+      properties:
+        request:
+          description: "The write request that defines what should have been written.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+        resourceAfterWrite:
+          description: "The Resource state right after the write happened. NULL in\
+            \ case of a delete action.\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+        resourceBeforeWrite:
+          description: "The Resource state just before the write happened. NULL in\
+            \ case of a create action.\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+      type: "object"
+    WriteRequest:
+      description: "Encapsulates a write action (CREATE, REPLACE, PATCH, DELETE) for\
+        \ a Resource. Holds the target id, full resource, or partial patchData depending\
+        \ on the action."
+      properties:
+        action:
+          description: "The write action to be performed. CREATE creates a new resource.\
+            \ REPLACE completely replaces an existing resource, identified by an id,\
+            \ with a given resource. PATCH changes the values of given properties\
+            \ for an existing resource, identified by an id. DELETE deletes one existing\
+            \ resource, identified by an id.\n\n- **Nullable**: false \n- **Read-only**:\
+            \ false"
+          enum:
+          - "CREATE"
+          - "REPLACE"
+          - "PATCH"
+          - "DELETE"
+          type: "string"
+        id:
+          description: "The id of the resource that should be written. Required for\
+            \ write actions REPLACE, PATCH, and DELETE. Null for write action CREATE.\n\
+            \n- **Nullable**: false \n- **Read-only**: false"
+        patchData:
+          description: "The properties and the data to be changed for an existing\
+            \ resource. Required for write action PATCH. Null for all other write\
+            \ actions.\n\n- **Nullable**: false \n- **Read-only**: false"
+        resource:
+          description: "The resource that should be written. Required for write actions\
+            \ CREATE and REPLACE. Null for write actions PATCH and DELETE.\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+      type: "object"
+    WriteResourcePermissionsFieldsException:
+      description: "Exception that represents that the calling authentication has\
+        \ no permission for the requested action on the resource for the requested\
+        \ fields."
+      properties:
+        blacklistedFields:
+          description: "The fields for which the caller has no permission\n\n- **Nullable**:\
+            \ false \n- **Read-only**: false"
+          type: "object"
+      type: "object"
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: "JWT"
+      description: "Authentication is performed by passing a JWT Bearer Token obtained\
+        \ from \n        `/api/v3/auth/user/` in the Authorization header."
+      scheme: "bearer"
+      type: "http"
+info:
+  description: "The Crewmeister API provides a powerful and flexible way to interact\
+    \ with Crewmeister services programmatically. Whether you're looking to integrate\
+    \ Crewmeister functionalities into your existing applications, automate complex\
+    \ workflows, or build custom solutions, our API offers the tools you need.\n\n\
+    - If you are new to the Crewmeister APIs or want a refresher on our common concepts,\
+    \ we recommend reading through the General API Guidelines. It covers essential\
+    \ information that will help you understand how all our APIs work.\n\n- If you\
+    \ are already familiar with the general workings of Crewmeister APIs, you can\
+    \ just continue reading.\n\n\n## Introduction\n\nThe **Crewmeister Integration\
+    \ API** allows applications to manage secure connections between Crewmeister and\
+    \ external third-party services using OAuth 2.0. Its core function is to enable\
+    \ the establishment, maintenance, and status monitoring of these external service\
+    \ authentications (`Connection`, `OauthStatus`).\n\n## Use Cases\n\nKey use cases\
+    \ include:\n* **Establishing Connections:** Programmatically initiating and completing\
+    \ the OAuth flow to authorize Crewmeister access to external services (like DATEV),\
+    \ storing the resulting `Connection` details (tokens, metadata).\n* **Managing\
+    \ Connections:** Retrieving details of existing `Connection` resources, updating\
+    \ tokens (e.g., via refresh tokens), and deleting connections when no longer needed.\n\
+    * **Monitoring Status:** Checking the current `OauthStatus` of a connection to\
+    \ determine if it is active, expired, or disconnected, often required before attempting\
+    \ data exchange.\n\n## Context within Broader System\n\nThis Integration API acts\
+    \ as the central component for managing OAuth-based connections to external systems\
+    \ within the Crewmeister suite. It provides the necessary authentication context\
+    \ (`Connection`) required by other modules, such as the Salary Export API when\
+    \ interacting with external payroll systems like DATEV.\n\n\n# General API Guidelines\n\
+    \n## Key Concepts\n\nThe Crewmeister APIs are resource-oriented — **everything\
+    \ is modeled as a resource**. Each resource supports a fixed set of operations,\
+    \ depending on whether it is read-only or writable.\n\n**All resources** support\
+    \ paginated reads.\n\n**Writable resources** can be:\n- Read by ID\n- Created,\
+    \ replaced, updated on selected properties, or deleted (individually or in batches)\n\
+    \nThe REST API uses JSON for both requests and responses. When sending data, include\
+    \ the following header: `Content-Type: application/json`\n\nEvery API call either:\n\
+    - Performs the requested operation, following the defined semantics\n- Or returns\
+    \ an ApiError object (see Error Handling for details)\n\n## Authentication and\
+    \ Authorization\n\nMost API endpoints require authentication, though a few may\
+    \ allow limited unauthenticated access. Authentication is handled via a token\
+    \ that identifies the caller. The system uses this identity to determine the caller's\
+    \ permissions for the requested resource and decides whether access is allowed.\
+    \ The caller must send this token with each request.\n\n### Obtain a user token\
+    \ with username and password\n\nPOST the following JSON to `/api/v3/auth/user/`,\
+    \ with content type `application/json`\n\n```json\n{\n  \"username\": \"email@email.com\"\
+    ,\n  \"password\": \"pwd\"\n}\n```\n\nYou will receive a JSON response containing\
+    \ the token.\n\n```json\n{\n  \"token\": \"eyJ0123AiOiJKV1QiLCJhbGciOiJIUzUxMiJ9...\"\
+    \n}\n```\n\n### Use the token\n\nWhen making API calls, add the header: `Authorization:\
+    \ Bearer {token}`\n\n### Responses when authorization is insufficient\n\n**401\
+    \ Unauthorized** with empty body in case no token is provided or the token is\
+    \ invalid\n\n**Reading with filter:** Empty result\n\n**Reading a single resource\
+    \ by Id for which you do not have permissions, deleting or modifying a resource\
+    \ for which you have no permissions**\n\nHTTP Status code **404**\n\n```json\n\
+    {\n  \"@type\": \"com.crewmeister/ApiError\",\n  \"code\": \"NOT_FOUND\",\n  \"\
+    details\": {},\n  \"message\": \"Resource with id 1000000 does not exist or you\
+    \ do not have permissions to read.\",\n  \"requestId\": \"c6c971ad485d5cbc12ecc2660231fd2a\"\
+    ,\n  \"type\": \"REQUEST\"\n}\n```\n\n**Trying to create a resource for which\
+    \ you have no permissions**\n\n**403 Forbidden**\n\n```json\n{\n  \"@type\": \"\
+    com.crewmeister/ApiError\",\n  \"code\": \"PERMISSION_DENIED\",\n  \"details\"\
+    : {\n    \"writeRequest\": {\n      \"id\": null,\n      \"patchData\": null,\n\
+    \      \"resource\": {\n        ...\n      }\n    },\n    \"writeRequestIndex\"\
+    : 0\n  },\n  \"message\": \"No permission for action create on the resource .\"\
+    ,\n  \"requestId\": \"8aa4efcfc923bc9b8dcdef2dc23ec187\",\n  \"type\": \"REQUEST\"\
+    \n}\n```\n\n## CallerContext\n\nThe CallerContext object carries information about\
+    \ who is calling the API and under which conditions. It is optional, yet can impact\
+    \ the behavior of the API request. See the CallerContext schema for more details.\
+    \ In the REST API, you send the CallerContext as a JSON via the `X-Caller-Context`\
+    \ header.\n\n## Error handling\n\nWhen an error occurs, the API always returns\
+    \ an ApiError object with a fixed structure. See the schema of the ApiError for\
+    \ more details.\n\nThere are two levels of error categories:\n\n**Error type /\
+    \ High-level category:** REQUEST error or PROCESSING error\n- **REQUEST** means\
+    \ that the server could not provide a proper answer because the request fails\
+    \ at fulfilling all the preconditions from the API endpoint contract.\n- **PROCESSING**\
+    \ means the server accepts the request as valid and fulfilling the preconditions,\
+    \ but due to internal problems cannot fulfill the request.\n\n**Error code / Low-level\
+    \ category:** The error code gives more insights into what the reason for the\
+    \ error is. Every error code maps to exactly one error type.\n\n## Error codes\n\
+    \nEvery ApiError maps to exactly one of those error codes.\n\n| Error Code | Description\
+    \ | HTTP Mapping |\n|------------|-------------|--------------|\n| `INVALID_ARGUMENT`\
+    \ | The client specified an invalid argument. Note that this differs from `FAILED_PRECONDITION`.\
+    \ `INVALID_ARGUMENT` indicates arguments that are problematic regardless of the\
+    \ state of the system. e.g., a malformed file name). | 400 Bad Request |\n| `NOT_FOUND`\
+    \ | Some requested entity (e.g., file or directory) was not found. | 404 Not Found\
+    \ |\n| `CANCELLED` | The operation was canceled, typically by the caller. | 499\
+    \ Client Closed Request |\n| `ALREADY_EXISTS` | The resource that a client attempted\
+    \ to create already exists. | 409 Conflict |\n| `UNAUTHENTICATED` | The request\
+    \ does not have valid authentication credentials for the operation. | 401 Unauthorized\
+    \ |\n| `PERMISSION_DENIED` | The caller does not have permission to execute the\
+    \ specified operation. `PERMISSION_DENIED` must not be used for rejections caused\
+    \ by exhausting some resource (use `RESOURCE_EXHAUSTED` instead for those errors).\
+    \ `PERMISSION_DENIED` must not be used if the caller can not be identified (use\
+    \ `UNAUTHENTICATED` instead for those errors). This error code does not imply\
+    \ the request is valid or the requested entity exists or satisfies other pre-conditions.\
+    \ | 403 Forbidden |\n| `RESOURCE_EXHAUSTED` | Some resource has been exhausted,\
+    \ perhaps a per-user quota, or perhaps the entire file system is out of space.\
+    \ | 429 Too Many Requests |\n| `FAILED_PRECONDITION` | The operation was rejected\
+    \ because the system is not in a state required for the operation's execution.\
+    \ For example, the directory to be deleted is non-empty, an rmdir operation is\
+    \ applied to a non-directory, etc. Service implementors can use the following\
+    \ guidelines to decide between `FAILED_PRECONDITION`, `ABORTED`, and `UNAVAILABLE`:\
+    \ <br/>1. Use `UNAVAILABLE` if the client can retry just the failing call.<br/>2.\
+    \ Use `ABORTED` if the client should retry at a higher level (e.g., when a client-specified\
+    \ test-and-set fails, indicating the client should restart a read-modify-write\
+    \ sequence).<br/>3. Use `FAILED_PRECONDITION` if the client should not retry until\
+    \ the system state has been explicitly fixed. E.g., if an rmdir fails because\
+    \ the directory is non-empty, `FAILED_PRECONDITION` should be returned since the\
+    \ client should not retry unless the files are deleted from the directory. | 400\
+    \ Bad Request |\n| `OUT_OF_RANGE` | The operation was attempted past the valid\
+    \ range. E.g., seeking or reading past end-of-file. Unlike `INVALID_ARGUMENT`,\
+    \ this error indicates a problem that may be fixed if the system state changes.\
+    \ For example, a 32-bit file system will generate `INVALID_ARGUMENT` if asked\
+    \ to read at an offset that is not in the range [0,2^32-1], but it will generate\
+    \ `OUT_OF_RANGE` if asked to read from an offset past the current file size. There\
+    \ is a fair bit of overlap between `FAILED_PRECONDITION` and `OUT_OF_RANGE`. We\
+    \ recommend using `OUT_OF_RANGE` (the more specific error) when it applies so\
+    \ that callers who are iterating through a space can easily look for an `OUT_OF_RANGE`\
+    \ error to detect when they are done. | 400 Bad Request |\n| `ABORTED` | The operation\
+    \ was aborted, typically due to a concurrency issue such as a sequencer check\
+    \ failure or transaction abort. See the guidelines above for deciding between\
+    \ `FAILED_PRECONDITION`, `ABORTED`, and `UNAVAILABLE`. | 409 Conflict |\n| `INTERNAL`\
+    \ | Internal errors. This means that some invariants expected by the underlying\
+    \ system have been broken. This error code is reserved for serious errors. | 500\
+    \ Internal Server Error |\n| `UNAVAILABLE` | The service is currently unavailable.\
+    \ This is most likely a transient condition, which can be corrected by retrying\
+    \ with a backoff. Note that it is not always safe to retry non-idempotent operations.\
+    \ | 503 Service Unavailable |\n| `DEADLINE_EXCEEDED` | The deadline expired before\
+    \ the operation could complete. For operations that change the state of the system,\
+    \ this error may be returned even if the operation has completed successfully.\
+    \ For example, a successful response from a server could have been delayed long\
+    \ enough for the deadline to expire. | 504 Gateway Timeout |\n| `UNKNOWN` | Unknown\
+    \ error. For example, this error may be returned when a Status value received\
+    \ from another address space belongs to an error space that is not known in this\
+    \ address space. Also errors raised by APIs that do not return enough error information\
+    \ may be converted to this error. | 500 Internal Server Error |\n| `UNIMPLEMENTED`\
+    \ | The operation is not implemented or is not supported/enabled in this service.\
+    \ | 501 Not Implemented |\n| `DATA_LOSS` | Unrecoverable data loss or corruption.\
+    \ | 500 Internal Server Error |\n\n## Jobs and asynchronous write operations\n\
+    \nOur APIs support both synchronous and asynchronous execution for write operations.\
+    \ This allows you to choose the approach best suited for your application's needs,\
+    \ particularly for potentially long-running or resource-intensive writes.\n\n\
+    So we support two execution modes for writing:\n\n1. **Synchronous (Default)**:\n\
+    \  - The API call blocks until the write operation is fully completed or fails.\n\
+    \  - The response you receive directly indicates the final outcome of the operation.\
+    \ \n  - This is the default behavior if no specific header is provided.\n\n2.\
+    \ **Asynchronous**:\n  - The API call immediately returns a `Job` resource, indicating\
+    \ that the request has been accepted for processing in the background.\n  - Your\
+    \ application does not block while the operation is being performed.\n  - You\
+    \ can then poll the `Job` resource to track its status and retrieve the final\
+    \ result.\n\nTo execute a write operation asynchronously, include the `X-Write-Async`\
+    \ header with a value of `true` in your request. You receive an `AsyncWriteResponse`\
+    \ that contains a job. Jobs have a status property that tells in which part of\
+    \ the lifecycle hey are:\n  - `WAITING`: the job is waiting to be processed\n\
+    \  - `PROCESSING`: The job is currently being processed\n  - `SUCCESS`: the job\
+    \ has been processed successfully. The property `responses` contains the result\
+    \ as a list of `SyncWriteResponses`.\n  - `ERROR`: the final attempt to process\
+    \ the job failed. It will not be tried again. The property error contains the\
+    \ `ApiError` that caused it to fail.\n\nJobs itself are resources that have an\
+    \ id property, and can be read by ID. This allows to get an updated view on a\
+    \ Job, for instance to see if it is already processed.  For a resource endpoint\
+    \ `https://...urlPrefix.../A`, the corresponding endpoint for its jobs is conventionally\
+    \ `https://...urlPrefix.../A-jobs/{jobId}`."
+  title: "Crewmeister Integration API"
+  version: "3.0.0"
+openapi: "3.0.3"
+paths:
+  /api/v3/auth/user/:
+    post:
+      description: "Authenticate a user with credentials to obtain a JWT token for\
+        \ API authorization."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                password:
+                  type: "string"
+                username:
+                  format: "email"
+                  type: "string"
+              required:
+              - "username"
+              - "password"
+              type: "object"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  token:
+                    description: "JWT token for Bearer authentication"
+                    example: "eyJ0123AiOiJKV1QiLCJhbGciOiJIUzUxMiJ9..."
+                    type: "string"
+                type: "object"
+          description: "Successful authentication, returns a token."
+      security: []
+      summary: "Obtain an authentication token using username and password"
+      tags:
+      - "Authentication"
+  /api/v3/integration/connections:
+    get:
+      description: "Return a page of Connections (20 entries by default) that the\
+        \ calling user has permission to access."
+      parameters:
+      - description: "Which page should be returned. Zero-index, i.e., 0 means the\
+          \ first page, 1 the second page etc."
+        in: "query"
+        name: "page"
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: "integer"
+      - description: "How many items should be returned in the page."
+        in: "query"
+        name: "pageSize"
+        required: false
+        schema:
+          default: 20
+          minimum: 1
+          type: "integer"
+      - description: "Sort order for the resources that will be returned. Use `+`\
+          \ for ascending and `-` for descending. Pass each sort in a separate sort\
+          \ parameter, e.g., `sort=-crewId&sort=+userId`."
+        in: "query"
+        name: "sort"
+        schema:
+          items:
+            enum:
+            - "+accessToken"
+            - "-accessToken"
+            - "+accessTokenExpiresAt"
+            - "-accessTokenExpiresAt"
+            - "+creatorName"
+            - "-creatorName"
+            - "+crewId"
+            - "-crewId"
+            - "+id"
+            - "-id"
+            - "+metadata"
+            - "-metadata"
+            - "+oauthServiceName"
+            - "-oauthServiceName"
+            - "+refreshToken"
+            - "-refreshToken"
+            - "+refreshTokenExpiresAt"
+            - "-refreshTokenExpiresAt"
+            - "+userId"
+            - "-userId"
+            type: "string"
+          type: "array"
+      - description: "Filter expression in [RSQL syntax](https://github.com/jirutka/rsql-parser?tab=readme-ov-file#grammar-and-semantic).\
+          \ The following filters are supported:\n- crewId: `Long` Identifier for\
+          \ the crew the connection belongs to\n- oauthServiceName: `OauthServiceName`\
+          \ Name of the OAuth service this connection is for"
+        in: "query"
+        name: "filter"
+        schema:
+          type: "string"
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/Page"
+                content:
+                - '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+                firstPage: true
+                hasContent: true
+                hasNextPage: false
+                hasPreviousPage: false
+                lastPage: true
+                number: 0
+                numberOfElements: 1
+                pageSize: 10
+                sort:
+                  '@type': "com.crewmeister/Sort"
+                  orders: []
+                totalElements: 1
+                totalPages: 1
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Page"
+                - properties:
+                    content:
+                      items:
+                        $ref: "#/components/schemas/Connection"
+                      type: "array"
+                  type: "object"
+          description: "Success"
+        "404":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "Resource does not exist."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "NOT_FOUND"
+                    details: {}
+                    message: "Resource does not exist or you do not have permissions\
+                      \ to read."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+                Example 2:
+                  summary: "No permission to read the resource."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "NOT_FOUND"
+                    details: {}
+                    message: "Resource does not exist or you do not have permissions\
+                      \ to read."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 404"
+      summary: "Read Connections paginated"
+      tags:
+      - "Connection"
+    patch:
+      description: "Create, update or delete one or more Connections items in a single\
+        \ batch request."
+      parameters:
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      - $ref: "#/components/parameters/XAsyncWrite"
+      requestBody:
+        content:
+          application/json:
+            example:
+            - body:
+                accessToken: "sample_access_token"
+                accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                creatorName: "John Doe"
+                crewId: 1
+                id: null
+                metadata:
+                  clientId: "sample_client_id"
+                oauthServiceName: "DATEV"
+                refreshToken: "sample_refresh_token"
+                refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                userId: 205634
+              method: "POST"
+              path: ""
+              scheduledAt: null
+            - body:
+                accessToken: "sample_access_token"
+                accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                creatorName: "John Doe"
+                crewId: 1
+                id: 2
+                metadata:
+                  clientId: "sample_client_id"
+                oauthServiceName: "DATEV"
+                refreshToken: "sample_refresh_token"
+                refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                userId: 205634
+              method: "PUT"
+              path: "/2"
+              scheduledAt: null
+            - body:
+                accessToken: "sample_access_token"
+                accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                creatorName: "John Doe"
+              method: "PATCH"
+              path: "/2"
+              scheduledAt: null
+            - body: null
+              method: "DELETE"
+              path: "/2"
+              scheduledAt: null
+            schema:
+              items:
+                allOf:
+                - $ref: "#/components/schemas/HttpWriteRequest"
+                - properties:
+                    body:
+                      oneOf:
+                      - $ref: "#/components/schemas/Connection"
+                      - properties:
+                          key:
+                            example: "some Text"
+                            type: "string"
+                        type: "object"
+              type: "array"
+        description: "Provide an array in which every element stands for a create/replace/patch/delete\
+          \ of a single Connection. For each element, provide the HTTP method, the\
+          \ path and the body as you would use for the create one/replace one/patch\
+          \ one delete/one endpoint."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+              - createdAt: "2025-09-22T15:59:49.660852375Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: null
+                  patchData: null
+                  resource:
+                    '@type': "com.crewmeister/Connection"
+                    accessToken: "sample_access_token"
+                    accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                    creatorName: "John Doe"
+                    crewId: 1
+                    id: null
+                    metadata:
+                      clientId: "sample_client_id"
+                    oauthServiceName: "DATEV"
+                    refreshToken: "sample_refresh_token"
+                    refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                    userId: 205634
+                resourceAfterWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+                resourceBeforeWrite: null
+              - createdAt: "2025-09-22T15:59:49.660857113Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: 2
+                  patchData: null
+                  resource:
+                    '@type': "com.crewmeister/Connection"
+                    accessToken: "sample_access_token"
+                    accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                    creatorName: "John Doe"
+                    crewId: 1
+                    id: 2
+                    metadata:
+                      clientId: "sample_client_id"
+                    oauthServiceName: "DATEV"
+                    refreshToken: "sample_refresh_token"
+                    refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                    userId: 205634
+                resourceAfterWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+                resourceBeforeWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+              - createdAt: "2025-09-22T15:59:49.660857945Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: 2
+                  patchData:
+                    accessToken: "sample_access_token"
+                    accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                    creatorName: "John Doe"
+                  resource: null
+                resourceAfterWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+                resourceBeforeWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+              - createdAt: "2025-09-22T15:59:49.660858716Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: 2
+                  patchData: null
+                  resource: null
+                resourceAfterWrite: null
+                resourceBeforeWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+              schema:
+                items:
+                  allOf:
+                  - $ref: "#/components/schemas/SyncWriteResponse"
+                  - properties:
+                      request:
+                        allOf:
+                        - $ref: "#/components/schemas/WriteRequest"
+                        - properties:
+                            resource:
+                              $ref: "#/components/schemas/Connection"
+                      resourceAfterWrite:
+                        $ref: "#/components/schemas/Connection"
+                      resourceBeforeWrite:
+                        $ref: "#/components/schemas/Connection"
+                    type: "object"
+                type: "array"
+          description: "Successful write."
+        "202":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/AsyncWriteResponse"
+                job:
+                  '@type': "com.crewmeister/Job"
+                  apiError: null
+                  authentication:
+                    '@type': "com.crewmeister/Authentication"
+                    id: "309103"
+                    type: "USER"
+                  callerContext:
+                    '@type': "com.crewmeister/CallerContext"
+                    actingContext: null
+                    authentication:
+                      '@type': "com.crewmeister/Authentication"
+                      id: "309103"
+                      type: "USER"
+                    clientAppId: null
+                    clientDevice: null
+                  createdAt: "2025-06-04T15:21:31.706202025Z"
+                  id: "6ed0712b-5c90-4642-bc40-52cacffed15b"
+                  processingGroups: []
+                  recurringDeadline: null
+                  recurringIntervalSeconds: null
+                  recurringPolicy: null
+                  requests:
+                  - '@type': "com.crewmeister/WriteRequest"
+                    id: null
+                    patchData: null
+                    resource:
+                      '@type': "com.crewmeister/Connection"
+                      accessToken: "sample_access_token"
+                      accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                      creatorName: "John Doe"
+                      crewId: 1
+                      id: null
+                      metadata:
+                        clientId: "sample_client_id"
+                      oauthServiceName: "DATEV"
+                      refreshToken: "sample_refresh_token"
+                      refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                      userId: 205634
+                  responses: null
+                  retryCount: 0
+                  scheduledAt: null
+                  status: "WAITING"
+                  updatedAt: "2025-06-04T15:21:31.706202025Z"
+              schema:
+                $ref: "#/components/schemas/AsyncWriteResponse"
+          description: "\n**Asynchronous Execution Accepted:**\nThe request for writing\
+            \ the resources has been accepted for background processing.\nThis response\
+            \ is returned when the `X-Write-Async` header in the request is set to\
+            \ `true`.\nThe response body contains a `Job` resource in the job property,\
+            \ which can be polled to check the status.\n"
+      summary: "Write Connections"
+      tags:
+      - "Connection"
+    post:
+      description: "Create a new Connection item."
+      parameters:
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      - $ref: "#/components/parameters/XAsyncWrite"
+      requestBody:
+        content:
+          application/json:
+            example:
+              '@type': "com.crewmeister/Connection"
+              accessToken: "sample_access_token"
+              accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+              creatorName: "John Doe"
+              crewId: 1
+              id: null
+              metadata:
+                clientId: "sample_client_id"
+              oauthServiceName: "DATEV"
+              refreshToken: "sample_refresh_token"
+              refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+              userId: 205634
+            schema:
+              $ref: "#/components/schemas/Connection"
+        description: "The Connection that you want to create in JSON format. Do not\
+          \ pass an `id` because it is assigned by the server."
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/SyncWriteResponse"
+                createdAt: "2025-09-22T15:59:49.617399353Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: null
+                  patchData: null
+                  resource:
+                    '@type': "com.crewmeister/Connection"
+                    accessToken: "sample_access_token"
+                    accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                    creatorName: "John Doe"
+                    crewId: 1
+                    id: null
+                    metadata:
+                      clientId: "sample_client_id"
+                    oauthServiceName: "DATEV"
+                    refreshToken: "sample_refresh_token"
+                    refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                    userId: 205634
+                resourceAfterWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+                resourceBeforeWrite: null
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/SyncWriteResponse"
+                - properties:
+                    request:
+                      allOf:
+                      - $ref: "#/components/schemas/WriteRequest"
+                      - properties:
+                          resource:
+                            $ref: "#/components/schemas/Connection"
+                    resourceAfterWrite:
+                      $ref: "#/components/schemas/Connection"
+                    resourceBeforeWrite:
+                      example: null
+                  type: "object"
+          description: "Successful creation of new record."
+        "202":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/AsyncWriteResponse"
+                job:
+                  '@type': "com.crewmeister/Job"
+                  apiError: null
+                  authentication:
+                    '@type': "com.crewmeister/Authentication"
+                    id: "309103"
+                    type: "USER"
+                  callerContext:
+                    '@type': "com.crewmeister/CallerContext"
+                    actingContext: null
+                    authentication:
+                      '@type': "com.crewmeister/Authentication"
+                      id: "309103"
+                      type: "USER"
+                    clientAppId: null
+                    clientDevice: null
+                  createdAt: "2025-06-04T15:21:31.706202025Z"
+                  id: "6ed0712b-5c90-4642-bc40-52cacffed15b"
+                  processingGroups: []
+                  recurringDeadline: null
+                  recurringIntervalSeconds: null
+                  recurringPolicy: null
+                  requests:
+                  - '@type': "com.crewmeister/WriteRequest"
+                    id: null
+                    patchData: null
+                    resource:
+                      '@type': "com.crewmeister/Connection"
+                      accessToken: "sample_access_token"
+                      accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                      creatorName: "John Doe"
+                      crewId: 1
+                      id: null
+                      metadata:
+                        clientId: "sample_client_id"
+                      oauthServiceName: "DATEV"
+                      refreshToken: "sample_refresh_token"
+                      refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                      userId: 205634
+                  responses: null
+                  retryCount: 0
+                  scheduledAt: null
+                  status: "WAITING"
+                  updatedAt: "2025-06-04T15:21:31.706202025Z"
+              schema:
+                $ref: "#/components/schemas/AsyncWriteResponse"
+          description: "\n**Asynchronous Execution Accepted:**\nThe request for writing\
+            \ the resources has been accepted for background processing.\nThis response\
+            \ is returned when the `X-Write-Async` header in the request is set to\
+            \ `true`.\nThe response body contains a `Job` resource in the job property,\
+            \ which can be polled to check the status.\n"
+        "400":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "When trying to create a connection with missing crewId"
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "INVALID_ARGUMENT"
+                    details:
+                      path:
+                      - "crewId"
+                      reason: "EMPTY"
+                      writeRequest:
+                        id: null
+                        patchData: null
+                        resource:
+                          '@type': "com.crewmeister/Connection"
+                          accessToken: "sample_access_token"
+                          accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                          creatorName: "John Doe"
+                          crewId: null
+                          id: null
+                          metadata:
+                            clientId: "sample_client_id"
+                          oauthServiceName: "DATEV"
+                          refreshToken: "sample_refresh_token"
+                          refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                          userId: 205634
+                      writeRequestIndex: 0
+                    message: "The value for property crewId must not be empty. Set\
+                      \ it to a non-empty value."
+                    requestId: null
+                    type: "REQUEST"
+                Example 2:
+                  summary: "When trying to create a connection with missing oauthServiceName"
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "INVALID_ARGUMENT"
+                    details:
+                      path:
+                      - "oauthServiceName"
+                      reason: "EMPTY"
+                      writeRequest:
+                        id: null
+                        patchData: null
+                        resource:
+                          '@type': "com.crewmeister/Connection"
+                          accessToken: "sample_access_token"
+                          accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                          creatorName: "John Doe"
+                          crewId: 123
+                          id: null
+                          metadata:
+                            clientId: "sample_client_id"
+                          oauthServiceName: null
+                          refreshToken: "sample_refresh_token"
+                          refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                          userId: 205634
+                      writeRequestIndex: 0
+                    message: "The value for property oauthServiceName must not be\
+                      \ empty. Set it to a non-empty value."
+                    requestId: null
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 400"
+        "403":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "No permission for action CREATE"
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "PERMISSION_DENIED"
+                    details: null
+                    message: "No permission for action CREATE"
+                    requestId: "00000000000000000000000000000000"
+                    type: "REQUEST"
+                Example 2:
+                  summary: "No permission for action create on the resource for fields\
+                    \ [name, description]."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "PERMISSION_DENIED"
+                    details:
+                      fields: "name, description"
+                      writeRequest:
+                        id: null
+                        patchData: null
+                        resource:
+                          '@type': "com.crewmeister/Resource"
+                          description: "Resource description"
+                          id: null
+                          name: "New Resource"
+                    message: "No permission for action create on the resource for\
+                      \ fields [name, description]."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 403"
+      summary: "Create one Connection"
+      tags:
+      - "Connection"
+  /api/v3/integration/connections/{id}:
+    delete:
+      description: "Delete a single Connection item identified by its ID."
+      parameters:
+      - description: "The ID of the Connection you want to delete."
+        in: "path"
+        name: "id"
+        required: true
+        schema:
+          example: 312
+          type: "integer"
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      - $ref: "#/components/parameters/XAsyncWrite"
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/SyncWriteResponse"
+                createdAt: "2025-09-22T15:59:49.617484553Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: 2
+                  patchData: null
+                  resource: null
+                resourceAfterWrite: null
+                resourceBeforeWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/SyncWriteResponse"
+                - properties:
+                    request:
+                      allOf:
+                      - $ref: "#/components/schemas/WriteRequest"
+                      - properties:
+                          resource:
+                            $ref: "#/components/schemas/Connection"
+                    resourceAfterWrite:
+                      example: null
+                    resourceBeforeWrite:
+                      $ref: "#/components/schemas/Connection"
+                  type: "object"
+          description: "Success"
+        "202":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/AsyncWriteResponse"
+                job:
+                  '@type': "com.crewmeister/Job"
+                  apiError: null
+                  authentication:
+                    '@type': "com.crewmeister/Authentication"
+                    id: "309103"
+                    type: "USER"
+                  callerContext:
+                    '@type': "com.crewmeister/CallerContext"
+                    actingContext: null
+                    authentication:
+                      '@type': "com.crewmeister/Authentication"
+                      id: "309103"
+                      type: "USER"
+                    clientAppId: null
+                    clientDevice: null
+                  createdAt: "2025-06-04T15:21:31.706202025Z"
+                  id: "6ed0712b-5c90-4642-bc40-52cacffed15b"
+                  processingGroups: []
+                  recurringDeadline: null
+                  recurringIntervalSeconds: null
+                  recurringPolicy: null
+                  requests:
+                  - '@type': "com.crewmeister/WriteRequest"
+                    id: 2
+                    patchData: null
+                    resource: null
+                  responses: null
+                  retryCount: 0
+                  scheduledAt: null
+                  status: "WAITING"
+                  updatedAt: "2025-06-04T15:21:31.706202025Z"
+              schema:
+                $ref: "#/components/schemas/AsyncWriteResponse"
+          description: "\n**Asynchronous Execution Accepted:**\nThe request for writing\
+            \ the resources has been accepted for background processing.\nThis response\
+            \ is returned when the `X-Write-Async` header in the request is set to\
+            \ `true`.\nThe response body contains a `Job` resource in the job property,\
+            \ which can be polled to check the status.\n"
+        "403":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "No permission for action DELETE on resource."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "PERMISSION_DENIED"
+                    details: null
+                    message: "No permission for action DELETE on resource."
+                    requestId: "00000000000000000000000000000000"
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 403"
+      summary: "Delete one Connection"
+      tags:
+      - "Connection"
+    get:
+      description: "Retrieve a single Connection item by its ID"
+      parameters:
+      - description: "The ID of the Connection you want to read."
+        in: "path"
+        name: "id"
+        required: true
+        schema:
+          example: 312
+          type: "integer"
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/Connection"
+                accessToken: "sample_access_token"
+                accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                creatorName: "John Doe"
+                crewId: 1
+                id: 2
+                metadata:
+                  clientId: "sample_client_id"
+                oauthServiceName: "DATEV"
+                refreshToken: "sample_refresh_token"
+                refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                userId: 205634
+              schema:
+                $ref: "#/components/schemas/Connection"
+          description: "Success"
+        "404":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "Resource not found."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "NOT_FOUND"
+                    details: null
+                    message: "Resource not found."
+                    requestId: "00000000000000000000000000000000"
+                    type: "REQUEST"
+                Example 2:
+                  summary: "Resource does not exist."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "NOT_FOUND"
+                    details: {}
+                    message: "Resource does not exist or you do not have permissions\
+                      \ to read."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+                Example 3:
+                  summary: "No permission to read the resource."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "NOT_FOUND"
+                    details: {}
+                    message: "Resource does not exist or you do not have permissions\
+                      \ to read."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 404"
+      summary: "Read one Connection"
+      tags:
+      - "Connection"
+    patch:
+      description: "You can change multiple attributes of a Connection at once."
+      parameters:
+      - description: "The ID of the Connection you want to update."
+        in: "path"
+        name: "id"
+        required: true
+        schema:
+          example: 312
+          type: "integer"
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      - $ref: "#/components/parameters/XAsyncWrite"
+      requestBody:
+        content:
+          application/json:
+            example:
+              accessToken: "sample_access_token"
+              accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+              creatorName: "John Doe"
+            schema:
+              $ref: "#/components/schemas/Connection"
+        description: "A key-value map. The key is the name of the property that you\
+          \ want to change the value of. The value is the value to what you want to\
+          \ set the property."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/SyncWriteResponse"
+                createdAt: "2025-09-22T15:59:49.654359160Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: 2
+                  patchData:
+                    accessToken: "sample_access_token"
+                    accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                    creatorName: "John Doe"
+                  resource: null
+                resourceAfterWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+                resourceBeforeWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/SyncWriteResponse"
+                - properties:
+                    request:
+                      allOf:
+                      - $ref: "#/components/schemas/WriteRequest"
+                      - properties:
+                          resource:
+                            $ref: "#/components/schemas/Connection"
+                    resourceAfterWrite:
+                      $ref: "#/components/schemas/Connection"
+                    resourceBeforeWrite:
+                      $ref: "#/components/schemas/Connection"
+                  type: "object"
+          description: "Successful write."
+        "202":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/AsyncWriteResponse"
+                job:
+                  '@type': "com.crewmeister/Job"
+                  apiError: null
+                  authentication:
+                    '@type': "com.crewmeister/Authentication"
+                    id: "309103"
+                    type: "USER"
+                  callerContext:
+                    '@type': "com.crewmeister/CallerContext"
+                    actingContext: null
+                    authentication:
+                      '@type': "com.crewmeister/Authentication"
+                      id: "309103"
+                      type: "USER"
+                    clientAppId: null
+                    clientDevice: null
+                  createdAt: "2025-06-04T15:21:31.706202025Z"
+                  id: "6ed0712b-5c90-4642-bc40-52cacffed15b"
+                  processingGroups: []
+                  recurringDeadline: null
+                  recurringIntervalSeconds: null
+                  recurringPolicy: null
+                  requests:
+                  - '@type': "com.crewmeister/WriteRequest"
+                    id: 2
+                    patchData:
+                      accessToken: "sample_access_token"
+                      accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                      creatorName: "John Doe"
+                    resource: null
+                  responses: null
+                  retryCount: 0
+                  scheduledAt: null
+                  status: "WAITING"
+                  updatedAt: "2025-06-04T15:21:31.706202025Z"
+              schema:
+                $ref: "#/components/schemas/AsyncWriteResponse"
+          description: "\n**Asynchronous Execution Accepted:**\nThe request for writing\
+            \ the resources has been accepted for background processing.\nThis response\
+            \ is returned when the `X-Write-Async` header in the request is set to\
+            \ `true`.\nThe response body contains a `Job` resource in the job property,\
+            \ which can be polled to check the status.\n"
+        "400":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "Same resource cannot be modified more than once a single\
+                    \ call."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "INVALID_ARGUMENT"
+                    details:
+                      writeRequest:
+                        id: 12345
+                        patchData: null
+                        resource:
+                          '@type': "com.crewmeister/Resource"
+                          id: 12345
+                          name: "Example Resource"
+                    message: "Same resource cannot be modified more than once a single\
+                      \ call. Summarize the state changes for the resource or make\
+                      \ separate calls."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 400"
+        "403":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "No permission for action PATCH on resource."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "PERMISSION_DENIED"
+                    details: null
+                    message: "No permission for action PATCH on resource."
+                    requestId: "00000000000000000000000000000000"
+                    type: "REQUEST"
+                Example 2:
+                  summary: "No permission for action update on the resource for fields\
+                    \ [name, description]."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "PERMISSION_DENIED"
+                    details:
+                      fields: "name, description"
+                      writeRequest:
+                        id: 12345
+                        patchData: null
+                        resource:
+                          '@type': "com.crewmeister/Resource"
+                          description: "New description"
+                          id: 12345
+                          name: "Updated Resource"
+                    message: "No permission for action update on the resource for\
+                      \ fields [name, description]."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+                Example 3:
+                  summary: "No permission for action update on the resource ."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "PERMISSION_DENIED"
+                    details:
+                      writeRequest:
+                        id: 12345
+                        patchData: null
+                        resource:
+                          '@type': "com.crewmeister/Resource"
+                          id: 12345
+                          name: "Example Resource"
+                    message: "No permission for action update on the resource."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 403"
+        "404":
+          content:
+            application/json:
+              examples:
+                Example 1:
+                  summary: "Resource does not exist or you do not have permissions\
+                    \ to update."
+                  value:
+                    '@type': "com.crewmeister/ApiError"
+                    code: "NOT_FOUND"
+                    details:
+                      writeRequest:
+                        id: 12345
+                        patchData: null
+                        resource:
+                          '@type': "com.crewmeister/Resource"
+                          id: 12345
+                          name: "Example Resource"
+                    message: "Resource does not exist or you do not have permissions\
+                      \ to update."
+                    requestId: "4d7b338f568b13bd7cc5ff0d4f5b5fb9"
+                    type: "REQUEST"
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: "Error response for code 404"
+      summary: "Update several attributes of one Connection"
+      tags:
+      - "Connection"
+    put:
+      description: "Replace an existing Connection item with a new one."
+      parameters:
+      - description: "The ID of the Connection you want to replace."
+        in: "path"
+        name: "id"
+        required: true
+        schema:
+          example: 312
+          type: "integer"
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      - $ref: "#/components/parameters/XAsyncWrite"
+      requestBody:
+        content:
+          application/json:
+            example:
+              '@type': "com.crewmeister/Connection"
+              accessToken: "sample_access_token"
+              accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+              creatorName: "John Doe"
+              crewId: 1
+              id: 2
+              metadata:
+                clientId: "sample_client_id"
+              oauthServiceName: "DATEV"
+              refreshToken: "sample_refresh_token"
+              refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+              userId: 205634
+            schema:
+              $ref: "#/components/schemas/Connection"
+        description: "The new Connection that should fully replace the existing Connection.\
+          \ The `id` property in the body is ignored by the server, only the `id`\
+          \ path parameter matters."
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/SyncWriteResponse"
+                createdAt: "2025-09-22T15:59:49.617546578Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: 2
+                  patchData: null
+                  resource:
+                    '@type': "com.crewmeister/Connection"
+                    accessToken: "sample_access_token"
+                    accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                    creatorName: "John Doe"
+                    crewId: 1
+                    id: 2
+                    metadata:
+                      clientId: "sample_client_id"
+                    oauthServiceName: "DATEV"
+                    refreshToken: "sample_refresh_token"
+                    refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                    userId: 205634
+                resourceAfterWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+                resourceBeforeWrite:
+                  '@type': "com.crewmeister/Connection"
+                  accessToken: "sample_access_token"
+                  accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                  creatorName: "John Doe"
+                  crewId: 1
+                  id: 2
+                  metadata:
+                    clientId: "sample_client_id"
+                  oauthServiceName: "DATEV"
+                  refreshToken: "sample_refresh_token"
+                  refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                  userId: 205634
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/SyncWriteResponse"
+                - properties:
+                    request:
+                      allOf:
+                      - $ref: "#/components/schemas/WriteRequest"
+                      - properties:
+                          resource:
+                            $ref: "#/components/schemas/Connection"
+                    resourceAfterWrite:
+                      $ref: "#/components/schemas/Connection"
+                    resourceBeforeWrite:
+                      $ref: "#/components/schemas/Connection"
+                  type: "object"
+          description: "Successful write."
+        "202":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/AsyncWriteResponse"
+                job:
+                  '@type': "com.crewmeister/Job"
+                  apiError: null
+                  authentication:
+                    '@type': "com.crewmeister/Authentication"
+                    id: "309103"
+                    type: "USER"
+                  callerContext:
+                    '@type': "com.crewmeister/CallerContext"
+                    actingContext: null
+                    authentication:
+                      '@type': "com.crewmeister/Authentication"
+                      id: "309103"
+                      type: "USER"
+                    clientAppId: null
+                    clientDevice: null
+                  createdAt: "2025-06-04T15:21:31.706202025Z"
+                  id: "6ed0712b-5c90-4642-bc40-52cacffed15b"
+                  processingGroups: []
+                  recurringDeadline: null
+                  recurringIntervalSeconds: null
+                  recurringPolicy: null
+                  requests:
+                  - '@type': "com.crewmeister/WriteRequest"
+                    id: 2
+                    patchData: null
+                    resource:
+                      '@type': "com.crewmeister/Connection"
+                      accessToken: "sample_access_token"
+                      accessTokenExpiresAt: "2023-06-01T12:00:00Z"
+                      creatorName: "John Doe"
+                      crewId: 1
+                      id: 2
+                      metadata:
+                        clientId: "sample_client_id"
+                      oauthServiceName: "DATEV"
+                      refreshToken: "sample_refresh_token"
+                      refreshTokenExpiresAt: "2023-07-01T12:00:00Z"
+                      userId: 205634
+                  responses: null
+                  retryCount: 0
+                  scheduledAt: null
+                  status: "WAITING"
+                  updatedAt: "2025-06-04T15:21:31.706202025Z"
+              schema:
+                $ref: "#/components/schemas/AsyncWriteResponse"
+          description: "\n**Asynchronous Execution Accepted:**\nThe request for writing\
+            \ the resources has been accepted for background processing.\nThis response\
+            \ is returned when the `X-Write-Async` header in the request is set to\
+            \ `true`.\nThe response body contains a `Job` resource in the job property,\
+            \ which can be polled to check the status.\n"
+      summary: "Replace one Connection"
+      tags:
+      - "Connection"
+  /api/v3/integration/i-cal-subscription-tasks:
+    post:
+      description: "Create a new ICalSubscriptionTask item."
+      parameters:
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      - $ref: "#/components/parameters/XAsyncWrite"
+      requestBody:
+        content:
+          application/json:
+            example:
+              '@type': "com.crewmeister/ICalSubscriptionTask"
+              creator: null
+              id: null
+              input:
+                '@type': "com.crewmeister/ICalSubscriptionTaskInput"
+                crewId: 24
+                userId: 205632
+              output: null
+            schema:
+              $ref: "#/components/schemas/ICalSubscriptionTask"
+        description: "The ICalSubscriptionTask that you want to create in JSON format.\
+          \ Do not pass an `id` because it is assigned by the server."
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/SyncWriteResponse"
+                createdAt: "2025-09-22T16:00:16.422520802Z"
+                request:
+                  '@type': "com.crewmeister/WriteRequest"
+                  id: null
+                  patchData: null
+                  resource:
+                    '@type': "com.crewmeister/ICalSubscriptionTask"
+                    creator: null
+                    id: null
+                    input:
+                      '@type': "com.crewmeister/ICalSubscriptionTaskInput"
+                      crewId: 24
+                      userId: 205632
+                    output: null
+                resourceAfterWrite:
+                  '@type': "com.crewmeister/ICalSubscriptionTask"
+                  creator: null
+                  id: null
+                  input:
+                    '@type': "com.crewmeister/ICalSubscriptionTaskInput"
+                    crewId: 24
+                    userId: 205632
+                  output:
+                    '@type': "com.crewmeister/ICalSubscriptionTaskOutput"
+                    feedURL: "https://api.crewmeister.com/ical/2dcb71b3-6e11-4c75-9697-7f0638b706d2.ics"
+                resourceBeforeWrite: null
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/SyncWriteResponse"
+                - properties:
+                    request:
+                      allOf:
+                      - $ref: "#/components/schemas/WriteRequest"
+                      - properties:
+                          resource:
+                            $ref: "#/components/schemas/ICalSubscriptionTask"
+                    resourceAfterWrite:
+                      $ref: "#/components/schemas/ICalSubscriptionTask"
+                    resourceBeforeWrite:
+                      example: null
+                  type: "object"
+          description: "Successful creation of new record."
+        "202":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/AsyncWriteResponse"
+                job:
+                  '@type': "com.crewmeister/Job"
+                  apiError: null
+                  authentication:
+                    '@type': "com.crewmeister/Authentication"
+                    id: "309103"
+                    type: "USER"
+                  callerContext:
+                    '@type': "com.crewmeister/CallerContext"
+                    actingContext: null
+                    authentication:
+                      '@type': "com.crewmeister/Authentication"
+                      id: "309103"
+                      type: "USER"
+                    clientAppId: null
+                    clientDevice: null
+                  createdAt: "2025-06-04T15:21:31.706202025Z"
+                  id: "6ed0712b-5c90-4642-bc40-52cacffed15b"
+                  processingGroups: []
+                  recurringDeadline: null
+                  recurringIntervalSeconds: null
+                  recurringPolicy: null
+                  requests:
+                  - '@type': "com.crewmeister/WriteRequest"
+                    id: null
+                    patchData: null
+                    resource:
+                      '@type': "com.crewmeister/ICalSubscriptionTask"
+                      creator: null
+                      id: null
+                      input:
+                        '@type': "com.crewmeister/ICalSubscriptionTaskInput"
+                        crewId: 24
+                        userId: 205632
+                      output: null
+                  responses: null
+                  retryCount: 0
+                  scheduledAt: null
+                  status: "WAITING"
+                  updatedAt: "2025-06-04T15:21:31.706202025Z"
+              schema:
+                $ref: "#/components/schemas/AsyncWriteResponse"
+          description: "\n**Asynchronous Execution Accepted:**\nThe request for writing\
+            \ the resources has been accepted for background processing.\nThis response\
+            \ is returned when the `X-Write-Async` header in the request is set to\
+            \ `true`.\nThe response body contains a `Job` resource in the job property,\
+            \ which can be polled to check the status.\n"
+      summary: "Create one ICalSubscriptionTask"
+      tags:
+      - "ICalSubscriptionTask"
+  /api/v3/integration/oauth-status:
+    get:
+      description: "Return a page of OauthStatus (20 entries by default) that the\
+        \ calling user has permission to access."
+      parameters:
+      - description: "Which page should be returned. Zero-index, i.e., 0 means the\
+          \ first page, 1 the second page etc."
+        in: "query"
+        name: "page"
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: "integer"
+      - description: "How many items should be returned in the page."
+        in: "query"
+        name: "pageSize"
+        required: false
+        schema:
+          default: 20
+          minimum: 1
+          type: "integer"
+      - description: "Sort order for the resources that will be returned. Use `+`\
+          \ for ascending and `-` for descending. Pass each sort in a separate sort\
+          \ parameter, e.g., `sort=-crewId&sort=+userId`."
+        in: "query"
+        name: "sort"
+        schema:
+          items:
+            enum:
+            - "+additionalData"
+            - "-additionalData"
+            - "+creatorName"
+            - "-creatorName"
+            - "+crewId"
+            - "-crewId"
+            - "+expiringAt"
+            - "-expiringAt"
+            - "+serviceName"
+            - "-serviceName"
+            - "+status"
+            - "-status"
+            - "+userId"
+            - "-userId"
+            type: "string"
+          type: "array"
+      - description: "Filter expression in [RSQL syntax](https://github.com/jirutka/rsql-parser?tab=readme-ov-file#grammar-and-semantic).\
+          \ The following filters are supported:\n- crewId: `Long` Identifier for\
+          \ the crew the OAuth status belongs to\n- serviceName: `OauthServiceName`\
+          \ Name of the OAuth service this status is for"
+        in: "query"
+        name: "filter"
+        schema:
+          type: "string"
+      - $ref: "#/components/parameters/XCallerContextHeader"
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                '@type': "com.crewmeister/Page"
+                content:
+                - '@type': "com.crewmeister/OauthStatus"
+                  additionalData:
+                    sample_key: "sample_value"
+                  creatorName: "John Doe"
+                  crewId: 140843
+                  expiringAt: "2023-07-01T12:00:00Z"
+                  serviceName: "DATEV"
+                  status: "EXPIRED"
+                  userId: 229708
+                firstPage: true
+                hasContent: true
+                hasNextPage: false
+                hasPreviousPage: false
+                lastPage: true
+                number: 0
+                numberOfElements: 1
+                pageSize: 10
+                sort:
+                  '@type': "com.crewmeister/Sort"
+                  orders: []
+                totalElements: 1
+                totalPages: 1
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Page"
+                - properties:
+                    content:
+                      items:
+                        $ref: "#/components/schemas/OauthStatus"
+                      type: "array"
+                  type: "object"
+          description: "Success"
+      summary: "Read OauthStatus paginated"
+      tags:
+      - "OauthStatus"
+security:
+- bearerAuth: []
+servers:
+- description: "Production environment"
+  url: "https://api.crewmeister.com"
+- description: "Internal staging environment for testing and integration purposes"
+  url: "https://api.crewmeister-stage.com"
+tags:
+- description: "Authentication endpoints for obtaining JWT tokens"
+  name: "Authentication"
+- description: "Connection resources represent established OAuth 2.0 links to external\
+    \ services, storing credentials like access/refresh tokens and associated metadata.\
+    \ Use these operations to manage the lifecycle of these connections, including\
+    \ creation, retrieval of details, updates (e.g., token refresh), and deletion."
+  name: "Connection"
+- description: "Task to create iCal subscriptions. You can use this task to create\
+    \ a subscription for a users's absence calendar. The task will return a feed URL\
+    \ that can be used to subscribe to the calendar. The crew id is required to identify\
+    \ the crew for which the subscription is created as well as the user id for which\
+    \ the subscription is created."
+  name: "ICalSubscriptionTask"
+- description: "OauthStatus resources provide information about the current state\
+    \ of an OAuth connection for a specific service and user, indicating if it's active,\
+    \ disconnected, or expired. Use these operations primarily to retrieve the current\
+    \ connection status and related details like expiry times for monitoring and user\
+    \ feedback."
+  name: "OauthStatus"
