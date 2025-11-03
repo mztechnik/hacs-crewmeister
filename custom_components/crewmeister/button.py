@@ -100,12 +100,8 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
     async def async_press(self) -> None:
         stamp_type = self.entity_description.stamp_type
         status = self.coordinator.data.get("status") if isinstance(self.coordinator.data, dict) else None
-        stamp_kwargs = self._derive_stamp_kwargs(stamp_type, status)
-
-        if stamp_type in (STAMP_TYPE_START_BREAK, STAMP_TYPE_CLOCK_OUT) and "chain_start_stamp_id" not in stamp_kwargs:
-            raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift found")
-        if stamp_type == STAMP_TYPE_START_WORK and status == "on_break" and "chain_start_stamp_id" not in stamp_kwargs:
-            raise HomeAssistantError("Failed to trigger Crewmeister stamp: unable to resume break")
+        self._ensure_valid_transition(stamp_type, status)
+        stamp_kwargs = self._derive_stamp_kwargs(stamp_type=stamp_type, status=status)
 
         try:
             await self._client.async_create_stamp(stamp_type, **stamp_kwargs)
@@ -113,33 +109,97 @@ class CrewmeisterStampButton(CoordinatorEntity[CrewmeisterStatusCoordinator], Bu
             raise HomeAssistantError(f"Failed to trigger Crewmeister stamp: {err}") from err
         await self.coordinator.async_request_refresh()
 
-    def _derive_stamp_kwargs(self, stamp_type: str, status: str | None) -> dict[str, object]:
-        """Return payload parameters for the requested stamp type."""
+    def _ensure_valid_transition(self, stamp_type: str, status: str | None) -> None:
+        """Validate that the requested transition is allowed."""
 
-        if not isinstance(self.coordinator.data, dict):
-            return {}
+        if status is None:
+            return
 
-        latest_stamp = self.coordinator.data.get("latest_stamp")
-        if not isinstance(latest_stamp, dict):
-            return {}
+        if stamp_type == STAMP_TYPE_START_WORK:
+            if status == "clocked_in":
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: already clocked in")
+        elif stamp_type == STAMP_TYPE_START_BREAK:
+            if status != "clocked_in":
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift to pause")
+        elif stamp_type == STAMP_TYPE_CLOCK_OUT:
+            if status not in {"clocked_in", "on_break"}:
+                raise HomeAssistantError("Failed to trigger Crewmeister stamp: no active shift to clock out from")
 
-        chain_start: int | None = latest_stamp.get("chainStartStampId")
-        allocation_date = latest_stamp.get("allocationDate")
-        if not isinstance(chain_start, int):
-            candidate = latest_stamp.get("id")
-            if isinstance(candidate, int):
-                chain_start = candidate
+    def _derive_stamp_kwargs(
+        self,
+        stamp_type: str | None = None,
+        status: str | None = None,
+    ) -> dict[str, object]:
+        """Return payload parameters derived from the latest stamp.
+
+        ``stamp_type`` and ``status`` are optional so legacy calls that do not pass
+        arguments continue to work. When omitted we pull the data from the entity
+        description and coordinator snapshot respectively.
+        """
+
+        stamp_type = stamp_type or self.entity_description.stamp_type
+        if status is None:
+            status = (
+                self.coordinator.data.get("status")
+                if isinstance(self.coordinator.data, dict)
+                else None
+            )
+
+        data = self.coordinator.data if isinstance(self.coordinator.data, dict) else None
+        latest_stamp = data.get("latest_stamp") if isinstance(data, dict) else None
+        latest_stamp = latest_stamp if isinstance(latest_stamp, dict) else None
+
+        chain_start = self._extract_chain_start(latest_stamp)
+        allocation_date = latest_stamp.get("allocationDate") if latest_stamp else None
 
         include_chain = False
         if stamp_type == STAMP_TYPE_START_WORK:
             include_chain = status == "on_break"
-        else:
+        elif stamp_type in (STAMP_TYPE_START_BREAK, STAMP_TYPE_CLOCK_OUT):
             include_chain = True
 
+        if include_chain:
+            if chain_start is None:
+                message = (
+                    "Failed to trigger Crewmeister stamp: no active shift found"
+                    if stamp_type != STAMP_TYPE_START_WORK
+                    else "Failed to trigger Crewmeister stamp: unable to resume break"
+                )
+                raise HomeAssistantError(message)
+
+        kwargs: dict[str, object] = {}
         if include_chain and chain_start is not None:
-            kwargs: dict[str, object] = {"chain_start_stamp_id": chain_start}
+            kwargs["chain_start_stamp_id"] = chain_start
             if isinstance(allocation_date, str) and allocation_date:
                 kwargs["allocation_date"] = allocation_date
-            return kwargs
+        return kwargs
 
-        return {}
+    @staticmethod
+    def _extract_chain_start(latest_stamp: dict[str, object] | None) -> int | None:
+        if not latest_stamp:
+            return None
+
+        raw_value = latest_stamp.get("chainStartStampId")
+        if raw_value is None:
+            raw_value = latest_stamp.get("chain_start_stamp_id")  # defensive
+
+        value = CrewmeisterStampButton._coerce_int(raw_value)
+        if value is not None:
+            return value
+
+        # Some API responses omit ``chainStartStampId`` on the first stamp of a chain
+        # but include the ``id`` of that stamp. Falling back to the ``id`` ensures we
+        # can continue the chain while respecting the documented constraint that the
+        # start identifier must remain stable across follow-up stamps.
+        return CrewmeisterStampButton._coerce_int(latest_stamp.get("id"))
+
+    @staticmethod
+    def _coerce_int(value: object) -> int | None:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                return None
+        return None
