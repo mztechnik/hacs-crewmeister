@@ -13,97 +13,97 @@ blueprint:
     min_version: 2025.1.0
   source_url: https://raw.githubusercontent.com/mztechnik/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_in.yaml
 
-input:
-  start_triggers:
-    name: Auslöser
-    description: |
-      Füge alle Trigger hinzu, die das automatische Einstempeln starten sollen. Typische
-      Beispiele sind das Verbinden mit einem bestimmten WLAN (State-Trigger auf den
-      entsprechenden WLAN-Sensor), das Betreten einer Zone (Person- oder Device-Tracker),
-      das Scannen eines NFC-Tags oder eine zeitgesteuerte Auslösung.
-    selector:
-      trigger: {}
+  input:
+    start_triggers:
+      name: Auslöser
+      description: |
+        Füge alle Trigger hinzu, die das automatische Einstempeln starten sollen. Typische
+        Beispiele sind das Verbinden mit einem bestimmten WLAN (State-Trigger auf den
+        entsprechenden WLAN-Sensor), das Betreten einer Zone (Person- oder Device-Tracker),
+        das Scannen eines NFC-Tags oder eine zeitgesteuerte Auslösung.
+      selector:
+        trigger: {}
 
-  working_sensor:
-    name: Crewmeister Arbeitsstatus (optional)
-    description: |
-      Wähle den Binärsensor "Eingestempelt" der Crewmeister-Integration aus, um zu verhindern,
-      dass mehrfach eingestempelt wird, wenn der Status bereits aktiv ist.
-    default: ""
-    selector:
-      entity:
-        integration: crewmeister
-        domain: binary_sensor
+    working_sensor:
+      name: Crewmeister Arbeitsstatus (optional)
+      description: |
+        Wähle den Binärsensor "Eingestempelt" der Crewmeister-Integration aus, um zu verhindern,
+        dass mehrfach eingestempelt wird, wenn der Status bereits aktiv ist.
+      default: ""
+      selector:
+        entity:
+          integration: crewmeister
+          domain: binary_sensor
 
-  block_helper:
-    name: Sperr-Schalter (optional)
-    description: |
-      Ein (optional auszuwählender) Helper wie `input_boolean`, der bei "An" das automatische
-      Einstempeln unterbindet. So lässt sich die Automatisierung z. B. bei Urlaub deaktivieren.
-    default: ""
-    selector:
-      entity:
-        domain:
-          - input_boolean
-          - switch
+    block_helper:
+      name: Sperr-Schalter (optional)
+      description: |
+        Ein (optional auszuwählender) Helper wie `input_boolean`, der bei "An" das automatische
+        Einstempeln unterbindet. So lässt sich die Automatisierung z. B. bei Urlaub deaktivieren.
+      default: ""
+      selector:
+        entity:
+          domain:
+            - input_boolean
+            - switch
 
-  use_time_window:
-    name: Zeitfenster verwenden
-    description: Aktiviere die Einschränkung auf ein bestimmtes tägliches Zeitfenster.
-    default: false
-    selector:
-      boolean: {}
+    use_time_window:
+      name: Zeitfenster verwenden
+      description: Aktiviere die Einschränkung auf ein bestimmtes tägliches Zeitfenster.
+      default: false
+      selector:
+        boolean: {}
 
-  earliest_time:
-    name: Früheste automatische Einstempelzeit
-    description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist.
-    default: "07:00:00"
-    selector:
-      time: {}
+    earliest_time:
+      name: Früheste automatische Einstempelzeit
+      description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist.
+      default: "07:00:00"
+      selector:
+        time: {}
 
-  latest_time:
-    name: Späteste automatische Einstempelzeit
-    description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist. Bei Bedarf kann
-      der Wert vor dem frühesten Zeitpunkt liegen, um einen Zeitraum über Mitternacht hinweg
-      abzudecken.
-    default: "11:00:00"
-    selector:
-      time: {}
+    latest_time:
+      name: Späteste automatische Einstempelzeit
+      description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist. Bei Bedarf kann
+        der Wert vor dem frühesten Zeitpunkt liegen, um einen Zeitraum über Mitternacht hinweg
+        abzudecken.
+      default: "11:00:00"
+      selector:
+        time: {}
 
-  note:
-    name: Notiz (optional)
-    description: Wird an die Stempelung übermittelt, wenn ausgefüllt.
-    default: ""
-    selector:
-      text:
-        multiline: false
+    note:
+      name: Notiz (optional)
+      description: Wird an die Stempelung übermittelt, wenn ausgefüllt.
+      default: ""
+      selector:
+        text:
+          multiline: false
 
-  location:
-    name: Ort (optional)
-    description: Optionaler Ortsname, der an Crewmeister übermittelt wird.
-    default: ""
-    selector:
-      text:
-        multiline: false
+    location:
+      name: Ort (optional)
+      description: Optionaler Ortsname, der an Crewmeister übermittelt wird.
+      default: ""
+      selector:
+        text:
+          multiline: false
 
-  time_account_id:
-    name: Zeitkonto-ID (optional)
-    description: Optionales Zeitkonto, das für die Stempelung genutzt werden soll.
-    default: null
-    selector:
-      number:
-        min: 1
-        mode: box
-        step: 1
+    time_account_id:
+      name: Zeitkonto-ID (optional)
+      description: Optionales Zeitkonto, das für die Stempelung genutzt werden soll.
+      default: null
+      selector:
+        number:
+          min: 1
+          mode: box
+          step: 1
 
-  crewmeister_account:
-    name: Crewmeister-Konto (optional)
-    description: Nutze dieses Feld, wenn mehrere Crewmeister-Integrationen vorhanden sind und
-      die Stempelung einem bestimmten Konto zugeordnet werden soll.
-    default: ""
-    selector:
-      config_entry:
-        integration: crewmeister
+    crewmeister_account:
+      name: Crewmeister-Konto (optional)
+      description: Nutze dieses Feld, wenn mehrere Crewmeister-Integrationen vorhanden sind und
+        die Stempelung einem bestimmten Konto zugeordnet werden soll.
+      default: ""
+      selector:
+        config_entry:
+          integration: crewmeister
 
 mode: single
 max_exceeded: silent
