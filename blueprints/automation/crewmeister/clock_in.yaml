@@ -171,18 +171,13 @@ action:
         {% else %}
           {{ none }}
         {% endif %}
+
   - service: crewmeister.create_stamp
     data:
       stamp_type: START_WORK
-      {% if sanitized_note %}
-      note: "{{ sanitized_note }}"
-      {% endif %}
-      {% if sanitized_location %}
-      location: "{{ sanitized_location }}"
-      {% endif %}
-      {% if sanitized_time_account is not none %}
-      time_account_id: {{ sanitized_time_account }}
-      {% endif %}
-      {% if sanitized_account %}
-      config_entry_id: "{{ sanitized_account }}"
-      {% endif %}
+      # Felder nur senden, wenn Werte vorhanden sind:
+      note: "{{ sanitized_note or omit }}"
+      location: "{{ sanitized_location or omit }}"
+      time_account_id: "{{ sanitized_time_account if sanitized_time_account is not none else omit }}"
+      config_entry_id: "{{ sanitized_account or omit }}"
+
