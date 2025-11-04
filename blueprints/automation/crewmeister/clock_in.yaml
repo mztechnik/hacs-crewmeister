@@ -9,7 +9,8 @@ blueprint:
     direkt aus dem Blueprint ausgewählt werden, um die Bedienung besonders komfortabel zu
     gestalten.
   domain: automation
-  source_url: https://raw.githubusercontent.com/crewmeister/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_in.yaml
+  source_url: https://github.com/crewmeister/hacs-crewmeister/blob/main/blueprints/automation/crewmeister/clock_in.yaml?raw=1
+
 
 input:
   start_triggers:
