@@ -8,7 +8,7 @@ blueprint:
     das Blueprint gut in unterschiedliche Setups einfügt, lassen sich der Crewmeister-Account,
     eine Notiz, ein Ort sowie optionale Sperren komfortabel auswählen.
   domain: automation
-  source_url: https://github.com/crewmeister/hacs-crewmeister/blob/main/blueprints/automation/crewmeister/clock_out.yaml?raw=1
+  source_url: https://raw.githubusercontent.com/crewmeister/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_out.yaml
 
 input:
   stop_triggers:
