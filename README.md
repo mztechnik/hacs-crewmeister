@@ -30,7 +30,20 @@ Diese HACS-Integration bindet Crewmeister in Home Assistant ein. Nach der Einric
 
 ## Automatisierungen
 
-Nutze den Dienst `crewmeister.create_stamp`, um z. B. beim Eintreffen in einem Geofence automatisch zu stempeln:
+### Blueprint-Unterstützung
+
+Im Verzeichnis [`blueprints/automation/crewmeister`](blueprints/automation/crewmeister) findest du zwei Automations-Blueprints für das automatische Ein- und Ausstempeln. Die Blueprints führen dich komfortabel durch alle wichtigen Einstellungen:
+
+- **Auslöser-Auswahl per UI:** Hinterlege beliebige Trigger wie WLAN-Verbindungen, Geofencing (Zone betreten/verlassen), NFC-Tags oder feste Zeitpunkte.
+- **Zeitfenster:** Lege optional fest, wann frühestens bzw. spätestens automatisch gestempelt werden soll – inklusive Unterstützung für Zeiträume über Mitternacht.
+- **Status- und Sperr-Abfragen:** Nutze den Crewmeister-Binärsensor „Eingestempelt“ sowie optionale Helfer (`input_boolean`/Schalter), um Doppelstempelungen oder unerwünschte Ausführungen zu verhindern.
+- **Zusatzfelder:** Übergib Notizen, Orte, Zeitkonten oder wähle bei mehreren Integrationen gezielt das richtige Crewmeister-Konto aus.
+
+Nach dem Import der Blueprints über **Einstellungen → Automatisierungen & Szenen → Blueprint importieren** kannst du beliebig viele Automatisierungen darauf basierend erstellen und individuell anpassen.
+
+### Direkte Service-Nutzung
+
+Alternativ kannst du den Dienst `crewmeister.create_stamp` manuell verwenden, um z. B. beim Eintreffen in einem Geofence automatisch zu stempeln:
 
 ```yaml
 service: crewmeister.create_stamp

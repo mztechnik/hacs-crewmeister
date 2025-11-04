@@ -1,0 +1,176 @@
+blueprint:
+  name: Crewmeister automatisches Einstempeln
+  description: |
+    Stempelt automatisch in Crewmeister ein, sobald einer der definierten Auslöser greift.
+    Unterstützt typische Szenarien wie das Verbinden mit einem bekannten WLAN, das Betreten
+    einer Zone (Geofencing), das Scannen eines NFC-Tags oder zeitbasierte Trigger. Über ein
+    optionales Zeitfenster lässt sich festlegen, wann frühestens bzw. spätestens automatisch
+    eingestempelt wird. Zusätzlich können Notizen, Orte oder ein bestimmtes Crewmeister-Konto
+    direkt aus dem Blueprint ausgewählt werden, um die Bedienung besonders komfortabel zu
+    gestalten.
+  domain: automation
+  source_url: https://github.com/crewmeister/hacs-crewmeister
+
+input:
+  start_triggers:
+    name: Auslöser
+    description: |
+      Füge alle Trigger hinzu, die das automatische Einstempeln starten sollen. Typische
+      Beispiele sind das Verbinden mit einem bestimmten WLAN (State-Trigger auf den
+      entsprechenden WLAN-Sensor), das Betreten einer Zone (Person- oder Device-Tracker),
+      das Scannen eines NFC-Tags oder eine zeitgesteuerte Auslösung.
+    selector:
+      trigger: {}
+
+  working_sensor:
+    name: Crewmeister Arbeitsstatus (optional)
+    description: |
+      Wähle den Binärsensor "Eingestempelt" der Crewmeister-Integration aus, um zu verhindern,
+      dass mehrfach eingestempelt wird, wenn der Status bereits aktiv ist.
+    default: ""
+    selector:
+      entity:
+        integration: crewmeister
+        domain: binary_sensor
+
+  block_helper:
+    name: Sperr-Schalter (optional)
+    description: |
+      Ein (optional auszuwählender) Helper wie `input_boolean`, der bei "An" das automatische
+      Einstempeln unterbindet. So lässt sich die Automatisierung z. B. bei Urlaub deaktivieren.
+    default: ""
+    selector:
+      entity:
+        domain:
+          - input_boolean
+          - switch
+
+  use_time_window:
+    name: Zeitfenster verwenden
+    description: Aktiviere die Einschränkung auf ein bestimmtes tägliches Zeitfenster.
+    default: false
+    selector:
+      boolean: {}
+
+  earliest_time:
+    name: Früheste automatische Einstempelzeit
+    description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist.
+    default: "07:00:00"
+    selector:
+      time: {}
+
+  latest_time:
+    name: Späteste automatische Einstempelzeit
+    description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist. Bei Bedarf kann
+      der Wert vor dem frühesten Zeitpunkt liegen, um einen Zeitraum über Mitternacht hinweg
+      abzudecken.
+    default: "11:00:00"
+    selector:
+      time: {}
+
+  note:
+    name: Notiz (optional)
+    description: Wird an die Stempelung übermittelt, wenn ausgefüllt.
+    default: ""
+    selector:
+      text:
+        multiline: false
+
+  location:
+    name: Ort (optional)
+    description: Optionaler Ortsname, der an Crewmeister übermittelt wird.
+    default: ""
+    selector:
+      text:
+        multiline: false
+
+  time_account_id:
+    name: Zeitkonto-ID (optional)
+    description: Optionales Zeitkonto, das für die Stempelung genutzt werden soll.
+    default: null
+    selector:
+      number:
+        min: 1
+        mode: box
+        step: 1
+
+  crewmeister_account:
+    name: Crewmeister-Konto (optional)
+    description: Nutze dieses Feld, wenn mehrere Crewmeister-Integrationen vorhanden sind und
+      die Stempelung einem bestimmten Konto zugeordnet werden soll.
+    default: ""
+    selector:
+      config_entry:
+        integration: crewmeister
+
+mode: single
+max_exceeded: silent
+
+variables:
+  use_time_window: !input use_time_window
+  earliest_time: !input earliest_time
+  latest_time: !input latest_time
+  working_sensor: !input working_sensor
+  block_helper: !input block_helper
+  note: !input note
+  location: !input location
+  time_account_id: !input time_account_id
+  crewmeister_account: !input crewmeister_account
+
+trigger: !input start_triggers
+
+condition:
+  - condition: template
+    value_template: >-
+      {% if block_helper in ["", none] %}
+        true
+      {% else %}
+        {{ states(block_helper) not in ["on", "unavailable", "unknown"] }}
+      {% endif %}
+  - condition: template
+    value_template: >-
+      {% if working_sensor in ["", none] %}
+        true
+      {% else %}
+        {{ states(working_sensor) != "on" }}
+      {% endif %}
+  - condition: template
+    value_template: >-
+      {% if use_time_window %}
+        {% set now_time = now().time() %}
+        {% set earliest = strptime(earliest_time, "%H:%M:%S").time() %}
+        {% set latest = strptime(latest_time, "%H:%M:%S").time() %}
+        {% if earliest <= latest %}
+          {{ earliest <= now_time <= latest }}
+        {% else %}
+          {{ now_time >= earliest or now_time <= latest }}
+        {% endif %}
+      {% else %}
+        true
+      {% endif %}
+
+action:
+  - service: crewmeister.create_stamp
+    data:
+      stamp_type: START_WORK
+      note: >-
+        {% set value = note | trim %}
+        {{ value if value | length > 0 else omit }}
+      location: >-
+        {% set value = location | trim %}
+        {{ value if value | length > 0 else omit }}
+      time_account_id: >-
+        {% if time_account_id is number %}
+          {{ time_account_id }}
+        {% elif time_account_id is string and time_account_id | length > 0 %}
+          {{ time_account_id | int }}
+        {% else %}
+          {{ omit }}
+        {% endif %}
+      config_entry_id: >-
+        {% if crewmeister_account is mapping %}
+          {% set value = crewmeister_account.get("id", "") | trim %}
+        {% else %}
+          {% set value = (crewmeister_account | string) | trim %}
+        {% endif %}
+        {{ value if value | length > 0 else omit }}
