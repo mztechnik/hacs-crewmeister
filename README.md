@@ -39,10 +39,7 @@ Im Verzeichnis [`blueprints/automation/crewmeister`](blueprints/automation/crewm
 - **Status- und Sperr-Abfragen:** Nutze den Crewmeister-Binärsensor „Eingestempelt“ sowie optionale Helfer (`input_boolean`/Schalter), um Doppelstempelungen oder unerwünschte Ausführungen zu verhindern.
 - **Zusatzfelder:** Übergib Notizen, Orte, Zeitkonten oder wähle bei mehreren Integrationen gezielt das richtige Crewmeister-Konto aus.
 
-Nach dem Import der Blueprints über **Einstellungen → Automatisierungen & Szenen → Blueprint importieren** kannst du beliebig viele Automatisierungen darauf basierend erstellen und individuell anpassen. Für den Import kannst du direkt folgende Links verwenden, die das YAML ohne HTML-Anteil ausliefern:
-
-- Einstempeln: <https://github.com/crewmeister/hacs-crewmeister/blob/main/blueprints/automation/crewmeister/clock_in.yaml?raw=1>
-- Ausstempeln: <https://github.com/crewmeister/hacs-crewmeister/blob/main/blueprints/automation/crewmeister/clock_out.yaml?raw=1>
+Nach dem Import der Blueprints über **Einstellungen → Automatisierungen & Szenen → Blueprint importieren** kannst du beliebig viele Automatisierungen darauf basierend erstellen und individuell anpassen.
 
 ### Direkte Service-Nutzung
 
