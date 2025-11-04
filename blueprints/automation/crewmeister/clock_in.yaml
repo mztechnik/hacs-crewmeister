@@ -9,8 +9,9 @@ blueprint:
     direkt aus dem Blueprint ausgewählt werden, um die Bedienung besonders komfortabel zu
     gestalten.
   domain: automation
-  homeassistant: 2024.6.0
-  source_url: https://raw.githubusercontent.com/crewmeister/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_in.yaml
+  homeassistant:
+    min_version: 2024.6.0
+  source_url: https://raw.githubusercontent.com/mztechnik/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_in.yaml
 
 input:
   start_triggers:
