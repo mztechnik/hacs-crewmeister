@@ -153,25 +153,30 @@ condition:
 action:
   - service: crewmeister.create_stamp
     data:
+      {%- set note_value = note | trim %}
+      {%- set location_value = location | trim %}
+      {%- set time_account_value = none %}
+      {%- if time_account_id is number %}
+        {%- set time_account_value = time_account_id %}
+      {%- elif time_account_id is string and time_account_id | length > 0 %}
+        {%- set time_account_value = time_account_id | int %}
+      {%- endif %}
+      {%- set config_entry_value = '' %}
+      {%- if crewmeister_account is mapping %}
+        {%- set config_entry_value = crewmeister_account.get("id", "") | trim %}
+      {%- else %}
+        {%- set config_entry_value = (crewmeister_account | string) | trim %}
+      {%- endif %}
       stamp_type: START_WORK
-      note: >-
-        {% set value = note | trim %}
-        {{ value if value | length > 0 else omit }}
-      location: >-
-        {% set value = location | trim %}
-        {{ value if value | length > 0 else omit }}
-      time_account_id: >-
-        {% if time_account_id is number %}
-          {{ time_account_id }}
-        {% elif time_account_id is string and time_account_id | length > 0 %}
-          {{ time_account_id | int }}
-        {% else %}
-          {{ omit }}
-        {% endif %}
-      config_entry_id: >-
-        {% if crewmeister_account is mapping %}
-          {% set value = crewmeister_account.get("id", "") | trim %}
-        {% else %}
-          {% set value = (crewmeister_account | string) | trim %}
-        {% endif %}
-        {{ value if value | length > 0 else omit }}
+      {%- if note_value %}
+      note: "{{ note_value }}"
+      {%- endif %}
+      {%- if location_value %}
+      location: "{{ location_value }}"
+      {%- endif %}
+      {%- if time_account_value is not none %}
+      time_account_id: {{ time_account_value }}
+      {%- endif %}
+      {%- if config_entry_value %}
+      config_entry_id: "{{ config_entry_value }}"
+      {%- endif %}
