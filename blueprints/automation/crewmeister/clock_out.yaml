@@ -8,6 +8,7 @@ blueprint:
     das Blueprint gut in unterschiedliche Setups einfügt, lassen sich der Crewmeister-Account,
     eine Notiz, ein Ort sowie optionale Sperren komfortabel auswählen.
   domain: automation
+  homeassistant: 2024.6.0
   source_url: https://raw.githubusercontent.com/crewmeister/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_out.yaml
 
 input:
@@ -118,6 +119,7 @@ trigger: !input stop_triggers
 
 condition:
   - condition: template
+    alias: Automatisierung nicht gesperrt
     value_template: >-
       {% if block_helper in ["", none] %}
         true
@@ -125,6 +127,7 @@ condition:
         {{ states(block_helper) not in ["on", "unavailable", "unknown"] }}
       {% endif %}
   - condition: template
+    alias: Arbeitsstatus aktiv
     value_template: >-
       {% if working_sensor in ["", none] %}
         true
@@ -132,47 +135,51 @@ condition:
         {{ states(working_sensor) == "on" }}
       {% endif %}
   - condition: template
+    alias: Innerhalb des optionalen Zeitfensters
     value_template: >-
       {% if use_time_window %}
-        {% set now_time = now().time() %}
+        {% set current_time = now().time() %}
         {% set earliest = strptime(earliest_time, "%H:%M:%S").time() %}
         {% set latest = strptime(latest_time, "%H:%M:%S").time() %}
         {% if earliest <= latest %}
-          {{ earliest <= now_time <= latest }}
+          {{ earliest <= current_time <= latest }}
         {% else %}
-          {{ now_time >= earliest or now_time <= latest }}
+          {{ current_time >= earliest or current_time <= latest }}
         {% endif %}
       {% else %}
         true
       {% endif %}
 
 action:
+  - variables:
+      sanitized_note: "{{ (note | string).strip() }}"
+      sanitized_location: "{{ (location | string).strip() }}"
+      sanitized_account: >-
+        {% if crewmeister_account is mapping %}
+          {{ crewmeister_account.get("id", "") | string | trim }}
+        {% else %}
+          {{ (crewmeister_account | string).strip() }}
+        {% endif %}
+      sanitized_time_account: >-
+        {% if time_account_id is number %}
+          {{ time_account_id }}
+        {% elif time_account_id is string and time_account_id | length > 0 %}
+          {{ (time_account_id | int(0)) }}
+        {% else %}
+          {{ none }}
+        {% endif %}
   - service: crewmeister.create_stamp
     data:
-      {%- set note_value = note | trim %}
-      {%- set location_value = location | trim %}
-      {%- set time_account_value = none %}
-      {%- if time_account_id is number %}
-        {%- set time_account_value = time_account_id %}
-      {%- elif time_account_id is string and time_account_id | length > 0 %}
-        {%- set time_account_value = time_account_id | int %}
-      {%- endif %}
-      {%- set config_entry_value = '' %}
-      {%- if crewmeister_account is mapping %}
-        {%- set config_entry_value = crewmeister_account.get("id", "") | trim %}
-      {%- else %}
-        {%- set config_entry_value = (crewmeister_account | string) | trim %}
-      {%- endif %}
       stamp_type: CLOCK_OUT
-      {%- if note_value %}
-      note: "{{ note_value }}"
-      {%- endif %}
-      {%- if location_value %}
-      location: "{{ location_value }}"
-      {%- endif %}
-      {%- if time_account_value is not none %}
-      time_account_id: {{ time_account_value }}
-      {%- endif %}
-      {%- if config_entry_value %}
-      config_entry_id: "{{ config_entry_value }}"
-      {%- endif %}
+      {% if sanitized_note %}
+      note: "{{ sanitized_note }}"
+      {% endif %}
+      {% if sanitized_location %}
+      location: "{{ sanitized_location }}"
+      {% endif %}
+      {% if sanitized_time_account is not none %}
+      time_account_id: {{ sanitized_time_account }}
+      {% endif %}
+      {% if sanitized_account %}
+      config_entry_id: "{{ sanitized_account }}"
+      {% endif %}
