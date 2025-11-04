@@ -1,9 +1,9 @@
 {
   "domain": "crewmeister",
   "name": "Crewmeister",
-  "version": "0.1.0",
-  "documentation": "https://github.com/home-assistant/core",
-  "codeowners": ["@crewmeister"],
+  "version": "0.2.0",
+  "documentation": "https://github.com/mztechnik/hacs-crewmeister/blob/main/README.md",
+  "codeowners": ["@mztechnik"],
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "config_flow": true,
