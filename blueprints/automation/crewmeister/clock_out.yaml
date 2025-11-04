@@ -8,98 +8,99 @@ blueprint:
     das Blueprint gut in unterschiedliche Setups einfügt, lassen sich der Crewmeister-Account,
     eine Notiz, ein Ort sowie optionale Sperren komfortabel auswählen.
   domain: automation
-  homeassistant: 2024.6.0
-  source_url: https://raw.githubusercontent.com/crewmeister/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_out.yaml
+  homeassistant:
+    min_version: 2025.1.0
+  source_url: https://raw.githubusercontent.com/mztechnik/hacs-crewmeister/main/blueprints/automation/crewmeister/clock_out.yaml
 
-input:
-  stop_triggers:
-    name: Auslöser
-    description: |
-      Füge alle Trigger hinzu, die das automatische Ausstempeln auslösen sollen. Beispiele
-      sind das Trennen von einem WLAN, das Verlassen einer Zone, ein NFC-Tag an der Haustür
-      oder eine bestimmte Uhrzeit.
-    selector:
-      trigger: {}
+  input:
+    stop_triggers:
+      name: Auslöser
+      description: |
+        Füge alle Trigger hinzu, die das automatische Ausstempeln auslösen sollen. Beispiele
+        sind das Trennen von einem WLAN, das Verlassen einer Zone, ein NFC-Tag an der Haustür
+        oder eine bestimmte Uhrzeit.
+      selector:
+        trigger: {}
 
-  working_sensor:
-    name: Crewmeister Arbeitsstatus (optional)
-    description: |
-      Wähle den Binärsensor "Eingestempelt" der Crewmeister-Integration aus, um sicherzustellen,
-      dass nur ausgestempelt wird, wenn tatsächlich Arbeitszeit läuft.
-    default: ""
-    selector:
-      entity:
-        integration: crewmeister
-        domain: binary_sensor
+    working_sensor:
+      name: Crewmeister Arbeitsstatus (optional)
+      description: |
+        Wähle den Binärsensor "Eingestempelt" der Crewmeister-Integration aus, um sicherzustellen,
+        dass nur ausgestempelt wird, wenn tatsächlich Arbeitszeit läuft.
+      default: ""
+      selector:
+        entity:
+          integration: crewmeister
+          domain: binary_sensor
 
-  block_helper:
-    name: Sperr-Schalter (optional)
-    description: |
-      Ein Helper wie `input_boolean` oder ein Schalter, der bei "An" das automatische
-      Ausstempeln verhindert (z. B. für Überstunden oder Außentermine).
-    default: ""
-    selector:
-      entity:
-        domain:
-          - input_boolean
-          - switch
+    block_helper:
+      name: Sperr-Schalter (optional)
+      description: |
+        Ein Helper wie `input_boolean` oder ein Schalter, der bei "An" das automatische
+        Ausstempeln verhindert (z. B. für Überstunden oder Außentermine).
+      default: ""
+      selector:
+        entity:
+          domain:
+            - input_boolean
+            - switch
 
-  use_time_window:
-    name: Zeitfenster verwenden
-    description: Aktiviere die Einschränkung auf ein tägliches Zeitfenster für das Ausstempeln.
-    default: false
-    selector:
-      boolean: {}
+    use_time_window:
+      name: Zeitfenster verwenden
+      description: Aktiviere die Einschränkung auf ein tägliches Zeitfenster für das Ausstempeln.
+      default: false
+      selector:
+        boolean: {}
 
-  earliest_time:
-    name: Früheste automatische Ausstempelzeit
-    description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist.
-    default: "14:00:00"
-    selector:
-      time: {}
+    earliest_time:
+      name: Früheste automatische Ausstempelzeit
+      description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist.
+      default: "14:00:00"
+      selector:
+        time: {}
 
-  latest_time:
-    name: Späteste automatische Ausstempelzeit
-    description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist. Liegt der Wert vor
-      der frühesten Zeit, gilt das Fenster über Mitternacht hinweg.
-    default: "21:00:00"
-    selector:
-      time: {}
+    latest_time:
+      name: Späteste automatische Ausstempelzeit
+      description: Wird nur berücksichtigt, wenn das Zeitfenster aktiviert ist. Liegt der Wert vor
+        der frühesten Zeit, gilt das Fenster über Mitternacht hinweg.
+      default: "21:00:00"
+      selector:
+        time: {}
 
-  note:
-    name: Notiz (optional)
-    description: Wird an die Stempelung übermittelt, wenn ausgefüllt.
-    default: ""
-    selector:
-      text:
-        multiline: false
+    note:
+      name: Notiz (optional)
+      description: Wird an die Stempelung übermittelt, wenn ausgefüllt.
+      default: ""
+      selector:
+        text:
+          multiline: false
 
-  location:
-    name: Ort (optional)
-    description: Optionaler Ortsname, der an Crewmeister übermittelt wird.
-    default: ""
-    selector:
-      text:
-        multiline: false
+    location:
+      name: Ort (optional)
+      description: Optionaler Ortsname, der an Crewmeister übermittelt wird.
+      default: ""
+      selector:
+        text:
+          multiline: false
 
-  time_account_id:
-    name: Zeitkonto-ID (optional)
-    description: Optionales Zeitkonto, das für die Stempelung genutzt werden soll.
-    default: null
-    selector:
-      number:
-        min: 1
-        mode: box
-        step: 1
+    time_account_id:
+      name: Zeitkonto-ID (optional)
+      description: Optionales Zeitkonto, das für die Stempelung genutzt werden soll.
+      default: null
+      selector:
+        number:
+          min: 1
+          mode: box
+          step: 1
 
-  crewmeister_account:
-    name: Crewmeister-Konto (optional)
-    description: Nutze dieses Feld, wenn mehrere Crewmeister-Integrationen vorhanden sind und
-      die Stempelung einem bestimmten Konto zugeordnet werden soll.
-    default: ""
-    selector:
-      config_entry:
-        integration: crewmeister
+    crewmeister_account:
+      name: Crewmeister-Konto (optional)
+      description: Nutze dieses Feld, wenn mehrere Crewmeister-Integrationen vorhanden sind und
+        die Stempelung einem bestimmten Konto zugeordnet werden soll.
+      default: ""
+      selector:
+        config_entry:
+          integration: crewmeister
 
 mode: single
 max_exceeded: silent
@@ -168,18 +169,11 @@ action:
         {% else %}
           {{ none }}
         {% endif %}
+
   - service: crewmeister.create_stamp
     data:
       stamp_type: CLOCK_OUT
-      {% if sanitized_note %}
-      note: "{{ sanitized_note }}"
-      {% endif %}
-      {% if sanitized_location %}
-      location: "{{ sanitized_location }}"
-      {% endif %}
-      {% if sanitized_time_account is not none %}
-      time_account_id: {{ sanitized_time_account }}
-      {% endif %}
-      {% if sanitized_account %}
-      config_entry_id: "{{ sanitized_account }}"
-      {% endif %}
+      note: "{{ sanitized_note or omit }}"
+      location: "{{ sanitized_location or omit }}"
+      time_account_id: "{{ sanitized_time_account if sanitized_time_account is not none else omit }}"
+      config_entry_id: "{{ sanitized_account or omit }}"
