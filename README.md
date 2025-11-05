@@ -10,8 +10,15 @@ Diese HACS-Integration bindet Crewmeister in Home Assistant ein. Nach der Einric
 - **Kalender** mit den eigenen Abwesenheiten (z. B. Urlaub oder Krankheit), inklusive Unterstützung für Teil-Tag-Abwesenheiten.
 - **Dienst** `crewmeister.create_stamp`, um Stempelungen inkl. optionaler Notiz, Ort oder Zeitpunkt automatisiert zu erstellen.
 
-## Installation über HACS
 
+### 🚀 Über HACS installieren
+
+[![Open HACS Repository in My Home Assistant](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mztechnik&repository=hacs-crewmeister&category=integration)
+
+> Klicke auf den Button oben, um das Repository direkt in deiner Home Assistant-Instanz zu öffnen.  
+> Stelle sicher, dass [HACS](https://hacs.xyz/) bereits installiert ist.
+
+Alternative Installation über HACS
 1. Öffne HACS in Home Assistant und wähle **Integrationen**.
 2. Klicke auf das Menü (⋮) und anschließend auf **Benutzerdefiniertes Repository hinzufügen**.
 3. Gib die URL dieses Repositories an und wähle den Typ **Integration**.
@@ -62,6 +69,7 @@ Optional lassen sich `timestamp`, `location`, `time_account_id` (wenn sie nicht 
 - Die Integration authentifiziert sich per Benutzername/Passwort direkt an der Crewmeister-API und erneuert das Token automatisch.
 - Abwesenheitstypen werden über die Crewmeister-API aufgelöst, sodass der Kalender sprechende Namen zeigt.
 - Für eine zuverlässige Funktion muss der Crewmeister-Benutzer über die benötigten API-Berechtigungen verfügen.
+- Diese Integration wurde komplett von Codex entwickelt (daher keine Haftung).
 
 ## Fehlerbehebung
 
