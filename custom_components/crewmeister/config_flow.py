@@ -230,10 +230,11 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
                     absence_state_options
                 ),
                 vol.Optional(CONF_STAMP_NOTE, default=stamp_note): cv.string,
-                vol.Optional(CONF_STAMP_TIME_ACCOUNT_ID, default=stamp_time_account_id): vol.All(
+                vol.Optional(
+                    CONF_STAMP_TIME_ACCOUNT_ID, default=stamp_time_account_id
+                ): vol.All(
                     cv.string,
                     vol.Strip,
-                    vol.Match(r"^\d*$"),
                 ),
             }
         )
