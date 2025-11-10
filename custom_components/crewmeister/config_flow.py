@@ -140,6 +140,38 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
             else:
                 sanitized.pop(CONF_ABSENCE_STATES, None)
 
+            stamp_note_value = sanitized.get(CONF_STAMP_NOTE)
+            if isinstance(stamp_note_value, str):
+                stamp_note_clean = stamp_note_value.strip()
+                if stamp_note_clean:
+                    sanitized[CONF_STAMP_NOTE] = stamp_note_clean
+                else:
+                    sanitized.pop(CONF_STAMP_NOTE, None)
+            else:
+                sanitized.pop(CONF_STAMP_NOTE, None)
+
+            stamp_time_account_value = sanitized.get(CONF_STAMP_TIME_ACCOUNT_ID)
+            if isinstance(stamp_time_account_value, str):
+                stamp_time_account_clean = stamp_time_account_value.strip()
+                if stamp_time_account_clean:
+                    try:
+                        stamp_time_account_id = int(stamp_time_account_clean)
+                    except ValueError:
+                        stamp_time_account_id = None
+                    else:
+                        if stamp_time_account_id <= 0:
+                            stamp_time_account_id = None
+                    if stamp_time_account_id is not None:
+                        sanitized[CONF_STAMP_TIME_ACCOUNT_ID] = stamp_time_account_id
+                    else:
+                        sanitized.pop(CONF_STAMP_TIME_ACCOUNT_ID, None)
+                else:
+                    sanitized.pop(CONF_STAMP_TIME_ACCOUNT_ID, None)
+            elif isinstance(stamp_time_account_value, int) and stamp_time_account_value > 0:
+                sanitized[CONF_STAMP_TIME_ACCOUNT_ID] = stamp_time_account_value
+            else:
+                sanitized.pop(CONF_STAMP_TIME_ACCOUNT_ID, None)
+
             return self.async_create_entry(title="", data=sanitized)
 
         absence_state_options = {
@@ -173,26 +205,18 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
             absence_states = ["APPROVED", "PRE_APPROVED"]
 
         stamp_note_option = self.entry.options.get(CONF_STAMP_NOTE)
-        if isinstance(stamp_note_option, str) or stamp_note_option is None:
-            stamp_note = stamp_note_option or ""
+        if isinstance(stamp_note_option, str):
+            stamp_note = stamp_note_option
         else:
             stamp_note = ""
 
         stamp_time_account_option = self.entry.options.get(CONF_STAMP_TIME_ACCOUNT_ID)
         if isinstance(stamp_time_account_option, int) and stamp_time_account_option > 0:
+            stamp_time_account_id = str(stamp_time_account_option)
+        elif isinstance(stamp_time_account_option, str):
             stamp_time_account_id = stamp_time_account_option
-        elif isinstance(stamp_time_account_option, str) and stamp_time_account_option.strip():
-            try:
-                stamp_time_account_id = int(stamp_time_account_option)
-            except ValueError:
-                stamp_time_account_id = None
-            else:
-                if stamp_time_account_id <= 0:
-                    stamp_time_account_id = None
         else:
-            stamp_time_account_id = None
-
-        stamp_note = stamp_note if stamp_note is not None else ""
+            stamp_time_account_id = ""
 
         schema = vol.Schema(
             {
@@ -205,8 +229,12 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_ABSENCE_STATES, default=absence_states or ["APPROVED", "PRE_APPROVED"]): cv.multi_select(
                     absence_state_options
                 ),
-                vol.Optional(CONF_STAMP_NOTE, default=stamp_note): vol.Any(str, None),
-                vol.Optional(CONF_STAMP_TIME_ACCOUNT_ID, default=stamp_time_account_id): vol.Any(None, cv.positive_int),
+                vol.Optional(CONF_STAMP_NOTE, default=stamp_note): cv.string,
+                vol.Optional(CONF_STAMP_TIME_ACCOUNT_ID, default=stamp_time_account_id): vol.All(
+                    cv.string,
+                    vol.Strip,
+                    vol.Match(r"^\d*$"),
+                ),
             }
         )
 
