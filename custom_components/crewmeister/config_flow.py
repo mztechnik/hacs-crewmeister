@@ -122,15 +122,6 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        interval_option = self.entry.options.get(CONF_UPDATE_INTERVAL)
-        if isinstance(interval_option, (int, float)):
-            update_interval = int(interval_option)
-        else:
-            update_interval = int(DEFAULT_UPDATE_INTERVAL.total_seconds())
-        absence_states = self.entry.options.get(CONF_ABSENCE_STATES, [])
-        stamp_note = self.entry.options.get(CONF_STAMP_NOTE, "")
-        stamp_time_account_id = self.entry.options.get(CONF_STAMP_TIME_ACCOUNT_ID)
-
         absence_state_options = {
             "APPROVED": "Approved",
             "PRE_APPROVED": "Pre-approved",
@@ -139,6 +130,60 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
             "DRAFT": "Draft",
             "REVOKED": "Revoked",
         }
+
+        interval_option = self.entry.options.get(CONF_UPDATE_INTERVAL)
+        if isinstance(interval_option, (int, float)):
+            update_interval = int(interval_option)
+        elif isinstance(interval_option, str) and interval_option.strip():
+            try:
+                update_interval = int(float(interval_option))
+            except ValueError:
+                update_interval = int(DEFAULT_UPDATE_INTERVAL.total_seconds())
+        elif hasattr(interval_option, "total_seconds"):
+            update_interval = int(interval_option.total_seconds())
+        else:
+            update_interval = int(DEFAULT_UPDATE_INTERVAL.total_seconds())
+
+        update_interval = max(30, min(3600, update_interval))
+
+        raw_absence_states = self.entry.options.get(CONF_ABSENCE_STATES)
+        if isinstance(raw_absence_states, str):
+            absence_states_iterable = [raw_absence_states]
+        elif isinstance(raw_absence_states, (list, tuple, set)):
+            absence_states_iterable = list(raw_absence_states)
+        else:
+            absence_states_iterable = []
+
+        absence_states = [
+            state
+            for state in absence_states_iterable
+            if state in absence_state_options
+        ]
+        absence_states.sort()
+        if not absence_states:
+            absence_states = ["APPROVED", "PRE_APPROVED"]
+
+        stamp_note_option = self.entry.options.get(CONF_STAMP_NOTE)
+        if isinstance(stamp_note_option, str) or stamp_note_option is None:
+            stamp_note = stamp_note_option or ""
+        else:
+            stamp_note = ""
+
+        stamp_time_account_option = self.entry.options.get(CONF_STAMP_TIME_ACCOUNT_ID)
+        if isinstance(stamp_time_account_option, int) and stamp_time_account_option > 0:
+            stamp_time_account_id = stamp_time_account_option
+        elif isinstance(stamp_time_account_option, str) and stamp_time_account_option.strip():
+            try:
+                stamp_time_account_id = int(stamp_time_account_option)
+            except ValueError:
+                stamp_time_account_id = None
+            else:
+                if stamp_time_account_id <= 0:
+                    stamp_time_account_id = None
+        else:
+            stamp_time_account_id = None
+
+        stamp_note = stamp_note if stamp_note is not None else ""
 
         schema = vol.Schema(
             {
