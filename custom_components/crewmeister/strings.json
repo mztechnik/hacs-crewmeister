@@ -25,7 +25,7 @@
     "step": {
       "init": {
         "data": {
-          "update_interval": "Status update interval (seconds)",
+          "update_interval": "Status update interval (seconds, min. 300)",
           "absence_states": "Absence states to include",
           "stamp_note": "Default note for created stamps",
           "stamp_time_account_id": "Default time account ID"

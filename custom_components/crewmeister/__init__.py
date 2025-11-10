@@ -29,7 +29,6 @@ from .const import (
     CONF_STAMP_TIME_ACCOUNT_ID,
     CONF_UPDATE_INTERVAL,
     CONF_USER_ID,
-    DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     PLATFORMS,
     SERVICE_CREATE_STAMP,
@@ -42,6 +41,7 @@ from .const import (
     STAMP_TYPES,
 )
 from .coordinator import CrewmeisterStatusCoordinator
+from .helpers import resolve_update_interval
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -121,12 +121,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 def _resolve_update_interval(entry: ConfigEntry) -> timedelta:
-    option_value = entry.options.get(CONF_UPDATE_INTERVAL)
-    if isinstance(option_value, timedelta):
-        return option_value
-    if isinstance(option_value, (int, float)):
-        return timedelta(seconds=float(option_value))
-    return DEFAULT_UPDATE_INTERVAL
+    return resolve_update_interval(entry.options.get(CONF_UPDATE_INTERVAL))
 
 
 def _create_identity(entry: ConfigEntry) -> CrewmeisterIdentity:

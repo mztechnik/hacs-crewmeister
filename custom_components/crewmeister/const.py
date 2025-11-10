@@ -16,7 +16,13 @@ CONF_STAMP_NOTE = "stamp_note"
 CONF_STAMP_TIME_ACCOUNT_ID = "stamp_time_account_id"
 
 DEFAULT_BASE_URL = "https://api.crewmeister.com"
-DEFAULT_UPDATE_INTERVAL = timedelta(seconds=300)
+
+# Polling interval bounds (in seconds)
+MIN_UPDATE_INTERVAL_SECONDS = 300
+MAX_UPDATE_INTERVAL_SECONDS = 3600
+
+# Default status polling interval (10 minutes)
+DEFAULT_UPDATE_INTERVAL = timedelta(seconds=600)
 
 SERVICE_CREATE_STAMP = "create_stamp"
 SERVICE_FIELD_CONFIG_ENTRY_ID = "config_entry_id"

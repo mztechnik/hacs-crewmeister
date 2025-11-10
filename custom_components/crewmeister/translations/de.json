@@ -25,7 +25,7 @@
     "step": {
       "init": {
         "data": {
-          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "update_interval": "Aktualisierungsintervall (Sekunden, min. 300)",
           "absence_states": "Anzuzeigende Abwesenheitsstatus",
           "stamp_note": "Standardnotiz für Stempelungen",
           "stamp_time_account_id": "Standard-Zeitkonto-ID"
