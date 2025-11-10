@@ -26,9 +26,11 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     CONF_USER_ID,
     DEFAULT_BASE_URL,
-    DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
+    MAX_UPDATE_INTERVAL_SECONDS,
+    MIN_UPDATE_INTERVAL_SECONDS,
 )
+from .helpers import coerce_update_interval_seconds
 
 
 class CrewmeisterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -120,7 +122,25 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            sanitized: dict[str, Any] = dict(user_input)
+            sanitized[CONF_UPDATE_INTERVAL] = coerce_update_interval_seconds(
+                user_input.get(CONF_UPDATE_INTERVAL)
+            )
+
+            absence_states_input = sanitized.get(CONF_ABSENCE_STATES) or []
+            if isinstance(absence_states_input, str):
+                absence_states = [absence_states_input]
+            elif isinstance(absence_states_input, (list, tuple, set)):
+                absence_states = [str(state) for state in absence_states_input]
+            else:
+                absence_states = []
+
+            if absence_states:
+                sanitized[CONF_ABSENCE_STATES] = sorted(absence_states)
+            else:
+                sanitized.pop(CONF_ABSENCE_STATES, None)
+
+            return self.async_create_entry(title="", data=sanitized)
 
         absence_state_options = {
             "APPROVED": "Approved",
@@ -131,20 +151,9 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
             "REVOKED": "Revoked",
         }
 
-        interval_option = self.entry.options.get(CONF_UPDATE_INTERVAL)
-        if isinstance(interval_option, (int, float)):
-            update_interval = int(interval_option)
-        elif isinstance(interval_option, str) and interval_option.strip():
-            try:
-                update_interval = int(float(interval_option))
-            except ValueError:
-                update_interval = int(DEFAULT_UPDATE_INTERVAL.total_seconds())
-        elif hasattr(interval_option, "total_seconds"):
-            update_interval = int(interval_option.total_seconds())
-        else:
-            update_interval = int(DEFAULT_UPDATE_INTERVAL.total_seconds())
-
-        update_interval = max(30, min(3600, update_interval))
+        update_interval = coerce_update_interval_seconds(
+            self.entry.options.get(CONF_UPDATE_INTERVAL)
+        )
 
         raw_absence_states = self.entry.options.get(CONF_ABSENCE_STATES)
         if isinstance(raw_absence_states, str):
@@ -187,7 +196,12 @@ class CrewmeisterOptionsFlowHandler(config_entries.OptionsFlow):
 
         schema = vol.Schema(
             {
-                vol.Required(CONF_UPDATE_INTERVAL, default=update_interval): vol.All(vol.Coerce(int), vol.Range(min=30, max=3600)),
+                vol.Required(CONF_UPDATE_INTERVAL, default=update_interval): vol.All(
+                    vol.Coerce(int),
+                    vol.Range(
+                        min=MIN_UPDATE_INTERVAL_SECONDS, max=MAX_UPDATE_INTERVAL_SECONDS
+                    ),
+                ),
                 vol.Optional(CONF_ABSENCE_STATES, default=absence_states or ["APPROVED", "PRE_APPROVED"]): cv.multi_select(
                     absence_state_options
                 ),
