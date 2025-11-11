@@ -37,23 +37,7 @@ Alternative Installation über HACS
 
 ## Automatisierungen
 
-### Blueprint-Unterstützung
-
-Im Verzeichnis [`blueprints/automation/crewmeister`](blueprints/automation/crewmeister) findest du zwei Automations-Blueprints für das automatische Ein- und Ausstempeln. Die Blueprints führen dich komfortabel durch alle wichtigen Einstellungen:
-
-- **Auslöser-Auswahl per UI:** Hinterlege beliebige Trigger wie WLAN-Verbindungen, Geofencing (Zone betreten/verlassen), NFC-Tags oder feste Zeitpunkte.
-- **Zeitfenster:** Lege optional fest, wann frühestens bzw. spätestens automatisch gestempelt werden soll – inklusive Unterstützung für Zeiträume über Mitternacht.
-- **Status- und Sperr-Abfragen:** Nutze den Crewmeister-Binärsensor „Eingestempelt“ sowie optionale Helfer (`input_boolean`/Schalter), um Doppelstempelungen oder unerwünschte Ausführungen zu verhindern.
-- **Zusatzfelder:** Übergib Notizen, Orte, Zeitkonten oder wähle bei mehreren Integrationen gezielt das richtige Crewmeister-Konto aus.
-
-Nach dem Import der Blueprints über **Einstellungen → Automatisierungen & Szenen → Blueprint importieren** kannst du beliebig viele Automatisierungen darauf basierend erstellen und individuell anpassen. Für den Import kannst du direkt folgende Links verwenden, die das YAML ohne HTML-Anteil ausliefern:
-
-- Einstempeln: <https://github.com/crewmeister/hacs-crewmeister/blob/main/blueprints/automation/crewmeister/clock_in.yaml?raw=1>
-- Ausstempeln: <https://github.com/crewmeister/hacs-crewmeister/blob/main/blueprints/automation/crewmeister/clock_out.yaml?raw=1>
-
-### Direkte Service-Nutzung
-
-Alternativ kannst du den Dienst `crewmeister.create_stamp` manuell verwenden, um z. B. beim Eintreffen in einem Geofence automatisch zu stempeln:
+Nutze den Dienst `crewmeister.create_stamp`, um z. B. beim Eintreffen in einem Geofence automatisch zu stempeln:
 
 ```yaml
 service: crewmeister.create_stamp
