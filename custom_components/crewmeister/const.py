@@ -21,7 +21,7 @@ DEFAULT_BASE_URL = "https://api.crewmeister.com"
 MIN_UPDATE_INTERVAL_SECONDS = 300
 MAX_UPDATE_INTERVAL_SECONDS = 3600
 
-# Default status polling interval (10 minutes)
+# Default status polling interval (30 minutes)
 DEFAULT_UPDATE_INTERVAL = timedelta(seconds=1800)
 
 SERVICE_CREATE_STAMP = "create_stamp"
