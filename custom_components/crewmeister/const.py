@@ -22,7 +22,7 @@ MIN_UPDATE_INTERVAL_SECONDS = 300
 MAX_UPDATE_INTERVAL_SECONDS = 3600
 
 # Default status polling interval (10 minutes)
-DEFAULT_UPDATE_INTERVAL = timedelta(seconds=600)
+DEFAULT_UPDATE_INTERVAL = timedelta(seconds=1800)
 
 SERVICE_CREATE_STAMP = "create_stamp"
 SERVICE_FIELD_CONFIG_ENTRY_ID = "config_entry_id"
