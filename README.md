@@ -4,11 +4,18 @@ Diese HACS-Integration bindet Crewmeister in Home Assistant ein. Nach der Einric
 
 ## Funktionsumfang
 
+### Entitäten
+
 - **Buttons** zum Einstempeln, Pausieren und Ausstempeln direkt aus Home Assistant.
 - **Sensoren** für den aktuellen Status und den Zeitstempel der letzten Stempelung.
 - **Binärsensor** „Eingestempelt“ zur Verwendung in Automatisierungen.
 - **Kalender** mit den eigenen Abwesenheiten (z. B. Urlaub oder Krankheit), inklusive Unterstützung für Teil-Tag-Abwesenheiten.
+
+### Dienste & Optionen
+
 - **Dienst** `crewmeister.create_stamp`, um Stempelungen inkl. optionaler Notiz, Ort oder Zeitpunkt automatisiert zu erstellen.
+- **Integration-Optionen** für Abfrageintervall, Filterung nach Abwesenheitsstatus, Standardnotiz sowie `time_account_id` für Stempelungen.
+- **Mehrbenutzer-Support**: Der Benutzername dient als eindeutige ID, sodass mehrere Konten parallel eingerichtet werden können.
 
 
 ### 🚀 Über HACS installieren
@@ -31,10 +38,6 @@ Alternative Installation über HACS
 3. Gib die Crewmeister-API-URL (Standard: `https://api.crewmeister.com`), deine Crewmeister-E-Mail-Adresse sowie dein Passwort ein.
 4. Nach erfolgreicher Anmeldung werden die Entities erstellt. Der Nutzername wird als eindeutige ID verwendet, sodass mehrere Konten möglich sind.
 
-## Optionen
-
-Über die Optionen der Integration kannst du das Abfrageintervall (in Sekunden), die berücksichtigten Abwesenheitsstatus (z. B. nur genehmigte Urlaube) sowie eine Standard-Notiz und eine optionale `time_account_id` für Stempelungen hinterlegen.
-
 ## Automatisierungen
 
 Nutze den Dienst `crewmeister.create_stamp`, um z. B. beim Eintreffen in einem Geofence automatisch zu stempeln:
@@ -53,7 +56,13 @@ Optional lassen sich `timestamp`, `location`, `time_account_id` (wenn sie nicht 
 - Die Integration authentifiziert sich per Benutzername/Passwort direkt an der Crewmeister-API und erneuert das Token automatisch.
 - Abwesenheitstypen werden über die Crewmeister-API aufgelöst, sodass der Kalender sprechende Namen zeigt.
 - Für eine zuverlässige Funktion muss der Crewmeister-Benutzer über die benötigten API-Berechtigungen verfügen.
-- Diese Integration wurde komplett von Codex entwickelt (daher keine Haftung).
+
+## Entwicklung & Haftungsausschluss
+
+- Diese Custom Integration wurde komplett durch eine KI (Codex) erstellt.
+- Nutzung auf eigene Gefahr: Es besteht **keine Haftung** für Schäden oder Datenverluste.
+- Das Projekt befindet sich aktuell noch in Entwicklung, daher können jederzeit Fehler auftreten.
+- Die Entwicklung ist **inoffiziell** und steht in **keinem Zusammenhang** mit Crewmeister bzw. der ATOSS Aloud GmbH.
 
 ## Fehlerbehebung
 
