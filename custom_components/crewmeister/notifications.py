@@ -171,6 +171,19 @@ def build_status_payload(
     return payload
 
 
+def build_quiet_status_payload(
+    entry_id: str, title: str, message: str, buttons: list[Button]
+) -> dict[str, Any]:
+    """Return a silent status notification with buttons (iOS, next to the live display).
+
+    Live Activities cannot show buttons, so this notification carries them.
+    """
+
+    payload = build_payload(entry_id, Kind.STATUS, title, message, buttons)
+    payload["data"]["push"] = {"interruption-level": "passive"}
+    return payload
+
+
 def build_live_payload(
     entry_id: str,
     title: str,
@@ -263,6 +276,17 @@ class Notifier:
         """Show the ongoing status notification."""
 
         await self._async_call(build_status_payload(self._entry_id, title, message, since, buttons))
+
+    async def async_send_quiet_status(
+        self, title: str, message: str, buttons: list[Button]
+    ) -> None:
+        """Send the silent status notification to all devices except Android ones."""
+
+        android = self._android_targets()
+        payload = build_quiet_status_payload(self._entry_id, title, message, buttons)
+        for target in self._targets:
+            if target not in android:
+                await self._async_call_target(target, payload)
 
     async def async_send_live(
         self,

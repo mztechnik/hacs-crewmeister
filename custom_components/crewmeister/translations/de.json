@@ -100,7 +100,7 @@
         "data_description": {
           "notify_targets": "Geräte mit der Home Assistant Companion App (notify.mobile_app_…). Ohne Gerät werden keine Benachrichtigungen gesendet.",
           "notify_confirmations": "Nach jeder Stempelung durch den Assistenten kommt eine kurze Bestätigung.",
-          "notify_live": "Zeigt Arbeitszeit mit laufender Uhr, Fortschritt zur Soll-Arbeitszeit und den voraussichtlichen Feierabend auf dem Sperrbildschirm. Benötigt Home Assistant 2026.7, iOS 17.2 bzw. die aktuelle Android-App. Ersetzt die dauerhafte Statusanzeige.",
+          "notify_live": "Zeigt Arbeitszeit mit laufender Uhr, Fortschritt zur Soll-Arbeitszeit und den voraussichtlichen Feierabend auf dem Sperrbildschirm. Benötigt Home Assistant 2026.7, iOS 17.2 bzw. die aktuelle Android-App. Ersetzt die dauerhafte Statusanzeige. iOS bekommt zusätzlich eine stille Benachrichtigung mit den Knöpfen, die Live Activities nicht zeigen können.",
           "notify_status": "Zeigt während der Arbeit eine dauerhafte Benachrichtigung mit laufender Uhr und Knöpfen. Wird nicht genutzt, wenn die Live-Anzeige an ist.",
           "live_icon_work": "Wird in der Live-Anzeige gezeigt, z. B. mdi:account-hard-hat (Bauarbeiter).",
           "live_icon_break": "Wird in der Live-Anzeige gezeigt, z. B. mdi:pretzel (Brezel)."

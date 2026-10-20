@@ -922,7 +922,7 @@ async def test_live_display(
     # Clocking out ends it
     await press(hass, f"{prefix}:CLOCK_OUT")
     cleared = [c for c in notifications if c.data["message"] == "clear_notification"]
-    assert cleared[-1].data["data"]["tag"] == tag
+    assert tag in {c.data["data"]["tag"] for c in cleared}
 
 
 async def test_live_display_restarts_before_ios_limit(
@@ -1300,3 +1300,57 @@ async def test_swipe_from_other_user_is_ignored(
     await advance(hass, freezer, timedelta(minutes=15))
 
     assert len(live_calls(notifications)) == 2
+
+
+async def test_live_display_quiet_status_on_ios(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    # iOS shows no buttons in Live Activities; a silent notification carries them
+    iphone = async_mock_service(hass, "notify", "mobile_app_iphone")
+    MockConfigEntry(
+        domain="mobile_app", data={"device_name": "Phone", "os_name": "Android"}
+    ).add_to_hass(hass)
+    MockConfigEntry(
+        domain="mobile_app", data={"device_name": "iPhone", "os_name": "iOS"}
+    ).add_to_hass(hass)
+    await setup(
+        hass,
+        mock_config_entry,
+        {"notify_targets": [PHONE, "mobile_app_iphone"], "notify_live": True},
+    )
+    status_tag = f"crewmeister_{mock_config_entry.entry_id}_status"
+    prefix = f"crewmeister:{mock_config_entry.entry_id}"
+
+    def status_calls(calls: list[ServiceCall]) -> list[ServiceCall]:
+        return [
+            c
+            for c in calls
+            if c.data["data"].get("tag") == status_tag and c.data["message"] != "clear_notification"
+        ]
+
+    assert len(live_calls(iphone)) == 1
+    (status,) = status_calls(iphone)
+    assert status.data["message"] == "Clocked in since 08:00"
+    assert status.data["data"]["push"] == {"interruption-level": "passive"}
+    assert actions(status) == [f"{prefix}:START_BREAK", f"{prefix}:CLOCK_OUT"]
+    # Android has the buttons in the live display
+    assert not status_calls(notifications)
+
+    # Only status changes update it, not the periodic refresh
+    await advance(hass, freezer, timedelta(minutes=15))
+    assert len(status_calls(iphone)) == 1
+    await press(hass, f"{prefix}:START_BREAK")
+    assert actions(status_calls(iphone)[-1]) == [f"{prefix}:RESUME", f"{prefix}:CLOCK_OUT"]
+
+    await advance(hass, freezer, timedelta(minutes=1))
+    await press(hass, f"{prefix}:CLOCK_OUT")
+    cleared = [c for c in iphone if c.data["message"] == "clear_notification"]
+    assert {c.data["data"]["tag"] for c in cleared} >= {
+        status_tag,
+        f"crewmeister_{mock_config_entry.entry_id}_live",
+    }

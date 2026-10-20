@@ -100,7 +100,7 @@
         "data_description": {
           "notify_targets": "Home Assistant Companion App devices (notify.mobile_app_…). Without a device no notifications are sent.",
           "notify_confirmations": "Send a short confirmation after each stamp made by the assistant.",
-          "notify_live": "Shows work time with a running timer, progress towards your target time and the expected end of day on the lock screen. Requires Home Assistant 2026.7, iOS 17.2 or the current Android app. Replaces the ongoing status notification.",
+          "notify_live": "Shows work time with a running timer, progress towards your target time and the expected end of day on the lock screen. Requires Home Assistant 2026.7, iOS 17.2 or the current Android app. Replaces the ongoing status notification. iOS also gets a silent notification with the buttons, which Live Activities cannot show.",
           "notify_status": "Shows a permanent notification with a running timer and buttons while you work. Not used if the live display is on.",
           "live_icon_work": "Shown in the live display, e.g. mdi:account-hard-hat.",
           "live_icon_break": "Shown in the live display, e.g. mdi:pretzel."

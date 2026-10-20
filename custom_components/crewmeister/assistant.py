@@ -1020,6 +1020,8 @@ class CrewmeisterAssistant:
     async def _async_status_changed(self, previous: WorkStatus | None, summary: DaySummary) -> None:
         if self.config.notify_live:
             await self._async_update_live(summary, force=True)
+            # The live display has no buttons on iOS; a silent notification carries them
+            await self._async_update_status_notification(summary, quiet=True)
         elif self.config.notify_status:
             await self._async_update_status_notification(summary)
         if (
@@ -1030,7 +1032,9 @@ class CrewmeisterAssistant:
         ):
             await self._async_check_break()
 
-    async def _async_update_status_notification(self, summary: DaySummary) -> None:
+    async def _async_update_status_notification(
+        self, summary: DaySummary, *, quiet: bool = False
+    ) -> None:
         since = summary.status_since
         if summary.status == WorkStatus.CLOCKED_OUT or since is None:
             await self._notifier.async_clear(Kind.STATUS)
@@ -1047,7 +1051,10 @@ class CrewmeisterAssistant:
                 Button(self._t("btn_resume"), Action.RESUME),
                 Button(self._t("btn_clock_out"), Action.CLOCK_OUT),
             ]
-        await self._notifier.async_send_status(self._t("status_title"), message, since, buttons)
+        if quiet:
+            await self._notifier.async_send_quiet_status(self._t("status_title"), message, buttons)
+        else:
+            await self._notifier.async_send_status(self._t("status_title"), message, since, buttons)
 
     async def _async_update_live(self, summary: DaySummary, *, force: bool = False) -> None:
         """Show or update the Live Activity (iOS) / Live Update (Android)."""
