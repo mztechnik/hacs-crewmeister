@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 – 2026-10-20
+
+Gleicher Stand wie das Release 0.4.0, nur mit neuer Versionsnummer. Zwischen den beiden Merges vom 20.10. konnte über HACS ein Zwischenstand von `main` installiert werden, der ebenfalls „0.4.0“ hieß, aber noch ohne Knöpfe und Farben der Live-Anzeige, „Ort als Notiz“, einstellbare Symbole und die Erinnerung ans Weiterarbeiten war. Mit 0.4.1 ist eindeutig, welcher Stand installiert ist.
+
 ## 0.4.0 – 2026-10-20
 
 ### Neu
