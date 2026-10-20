@@ -1155,3 +1155,51 @@ async def test_live_display_custom_icons(
     )
     await hass.async_block_till_done()
     assert live_calls(notifications)[-1].data["data"]["notification_icon"] == "mdi:pretzel"
+
+
+async def test_resume_reminder_at_fixed_time(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    backend.add("START_BREAK", NOW - timedelta(minutes=20))
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            "notify_targets": [PHONE],
+            "resume_reminder_time": "10:10:00",
+            "break_end_reminder": False,
+        },
+    )
+
+    await advance(hass, freezer, timedelta(minutes=10))
+
+    call = notifications[-1]
+    assert call.data["title"] == "Back to work?"
+    assert call.data["message"] == "You have been on a break since 09:40 (0:30 h)."
+    assert actions(call) == [f"crewmeister:{mock_config_entry.entry_id}:RESUME"]
+    await press(hass, actions(call)[0])
+    assert stamps(backend)[-1] == ("START_WORK", NOW + timedelta(minutes=10))
+
+
+async def test_no_resume_reminder_while_working(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup(
+        hass,
+        mock_config_entry,
+        {"notify_targets": [PHONE], "resume_reminder_time": "10:10:00"},
+    )
+
+    await advance(hass, freezer, timedelta(minutes=10))
+
+    assert "Back to work?" not in titles(notifications)

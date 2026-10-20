@@ -75,6 +75,7 @@ from .const import (
     CONF_PRESENCE_ENTITIES,
     CONF_REMIND_ON_LEAVE,
     CONF_REMINDER_TIME,
+    CONF_RESUME_REMINDER_TIME,
     CONF_SHORT_LEAVE_BREAK,
     CONF_SNOOZE_MINUTES,
     CONF_STAMP_LOCATION,
@@ -276,6 +277,7 @@ BREAKS_SCHEMA = vol.Schema(
                 vol.Required(CONF_BREAK_END_REMINDER): BooleanSelector(),
                 vol.Required(CONF_AUTO_RESUME): BooleanSelector(),
                 vol.Optional(CONF_LUNCH_BREAK_TIME): TimeSelector(),
+                vol.Optional(CONF_RESUME_REMINDER_TIME): TimeSelector(),
             }
         ),
         vol.Required("break_check"): _section(

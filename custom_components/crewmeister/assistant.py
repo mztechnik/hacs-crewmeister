@@ -235,6 +235,7 @@ class CrewmeisterAssistant:
             (cfg.reminder_time, self._async_reminder_time),
             (cfg.forgotten_check_time, self._async_forgotten_check),
             (cfg.lunch_break_time, self._async_lunch_break),
+            (cfg.resume_reminder_time, self._async_resume_reminder),
         ):
             if at is not None:
                 self._unsubs.append(
@@ -967,6 +968,24 @@ class CrewmeisterAssistant:
         summary = await self._async_fresh_summary()
         if summary is not None and summary.status == WorkStatus.CLOCKED_IN:
             await self._async_stamp(StampType.START_BREAK, automatic=True)
+
+    async def _async_resume_reminder(self, _now: datetime) -> None:
+        """Remind to resume work at a fixed time if the break is still running."""
+
+        summary = await self._async_fresh_summary()
+        if summary is None or summary.status != WorkStatus.ON_BREAK or not summary.status_since:
+            return
+        await self._notifier.async_send(
+            Kind.BREAK,
+            self._t("resume_time_title"),
+            self._t(
+                "resume_time_message",
+                since=_hm(summary.status_since),
+                duration=format_duration(summary.current_break),
+            ),
+            [Button(self._t("btn_resume"), Action.RESUME)],
+            time_sensitive=True,
+        )
 
     # -------------------------------------------------------------- status changes
 

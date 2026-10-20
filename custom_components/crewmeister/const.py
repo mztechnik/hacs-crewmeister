@@ -101,6 +101,7 @@ CONF_BREAK_CHECK: Final = "break_check"
 CONF_BREAK_AFTER_6H: Final = "break_after_6h"
 CONF_BREAK_AFTER_9H: Final = "break_after_9h"
 CONF_LUNCH_BREAK_TIME: Final = "lunch_break_time"
+CONF_RESUME_REMINDER_TIME: Final = "resume_reminder_time"
 
 DEFAULT_BASE_URL: Final = "https://api.crewmeister.com"
 

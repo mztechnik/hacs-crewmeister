@@ -8,7 +8,7 @@
   - Actionable Notifications für Android und iOS über die Companion App, optional dauerhafte Statusanzeige mit Stoppuhr (Android).
   - Automatisches Ein- und Ausstempeln bzw. Nachfragen per Zone/Person, WLAN-SSID, Binärsensoren oder NFC-Tag; Verzögerungen, Zeitfenster, Arbeitstage, Rückdatieren, kurze Abwesenheit als Pause, Homeoffice-Nachfrage; Schalter zum Pausieren.
   - Ausstempel-Erinnerungen (beim Verlassen, Uhrzeit, Höchstarbeitszeit, Schlummern) und Erkennung von vergessenem Ausstempeln mit rückwirkendem Ausstempeln.
-  - Pausenassistent: Pausenerinnerung, Pausenende/automatisch weiterarbeiten, automatische Mittagspause, Pausenprüfung nach ArbZG mit Nachtragen der fehlenden Pause in Crewmeister.
+  - Pausenassistent: Pausenerinnerung, Pausenende/automatisch weiterarbeiten, Erinnerung ans Weiterarbeiten zu einer festen Uhrzeit, automatische Mittagspause, Pausenprüfung nach ArbZG mit Nachtragen der fehlenden Pause in Crewmeister.
 - **Homeoffice-Erkennung** über Steckdose mit Leistungsmessung und Präsenzmelder/PC-Status (Person zu Hause, Arbeitstag, Zeitfenster) mit automatischem bzw. nachfragendem Ein- und Ausstempeln und Pause bei kurzer Inaktivität. Ersetzt die Homeoffice-Nachfrage zu fester Uhrzeit.
 - Sensor **Arbeitsort** (Büro / Homeoffice / Nicht bei der Arbeit).
 - Optional **Ort am Stempel** („Büro“ / „Homeoffice“, Texte anpassbar), wahlweise als Notiz für Konten ohne Berechtigung für den Ort.

@@ -52,6 +52,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "break_missing_message": "Bei {worked} Arbeitszeit sind {required} Pause vorgeschrieben, du hattest {taken} (gezählt werden Pausen ab 15 min).",
         "lunch_title": "Mittagspause",
         "lunch_message": "Pause automatisch gestartet.",
+        "resume_time_title": "Weiterarbeiten?",
+        "resume_time_message": "Du bist seit {since} in der Pause ({duration}).",
         # Confirmations and status
         "stamped_START_WORK": "Eingestempelt um {time}",
         "stamped_START_BREAK": "Pause seit {time}",
@@ -118,6 +120,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "break_missing_message": "{worked} of work require a {required} break, you took {taken} (only breaks of 15 min or more count).",
         "lunch_title": "Lunch break",
         "lunch_message": "Break started automatically.",
+        "resume_time_title": "Back to work?",
+        "resume_time_message": "You have been on a break since {since} ({duration}).",
         "stamped_START_WORK": "Clocked in at {time}",
         "stamped_START_BREAK": "On break since {time}",
         "stamped_CLOCK_OUT": "Clocked out at {time} – {worked} today, break {breaks}",

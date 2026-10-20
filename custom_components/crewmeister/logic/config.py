@@ -52,6 +52,7 @@ from ..const import (
     CONF_PRESENCE_ENTITIES,
     CONF_REMIND_ON_LEAVE,
     CONF_REMINDER_TIME,
+    CONF_RESUME_REMINDER_TIME,
     CONF_SHORT_LEAVE_BREAK,
     CONF_SNOOZE_MINUTES,
     CONF_STAMP_LOCATION,
@@ -192,6 +193,7 @@ class AssistantConfig:
     break_after_6h: timedelta = timedelta(minutes=30)
     break_after_9h: timedelta = timedelta(minutes=45)
     lunch_break_time: time | None = None
+    resume_reminder_time: time | None = None
 
     @property
     def home_office_configured(self) -> bool:
@@ -304,6 +306,7 @@ class AssistantConfig:
             break_after_6h=minutes(CONF_BREAK_AFTER_6H),
             break_after_9h=minutes(CONF_BREAK_AFTER_9H),
             lunch_break_time=_time(options.get(CONF_LUNCH_BREAK_TIME)),
+            resume_reminder_time=_time(options.get(CONF_RESUME_REMINDER_TIME)),
         )
 
 

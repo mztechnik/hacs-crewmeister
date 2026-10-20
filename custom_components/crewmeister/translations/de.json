@@ -260,12 +260,14 @@
               "break_duration": "Pausendauer",
               "break_end_reminder": "Benachrichtigen, wenn die Pause vorbei ist",
               "auto_resume": "Nach der Pause automatisch weiterarbeiten",
-              "lunch_break_time": "Mittagspause automatisch starten um"
+              "lunch_break_time": "Mittagspause automatisch starten um",
+              "resume_reminder_time": "Ans Weiterarbeiten erinnern um"
             },
             "data_description": {
               "break_reminder_after": "Durchgehende Arbeitszeit ohne Pause. 0 = aus.",
               "break_duration": "Für die Benachrichtigung am Pausenende, das automatische Weiterarbeiten und die Mittagspause.",
-              "lunch_break_time": "Startet zu dieser Uhrzeit eine Pause, falls du eingestempelt bist. Leer = aus."
+              "lunch_break_time": "Startet zu dieser Uhrzeit eine Pause, falls du eingestempelt bist. Leer = aus.",
+              "resume_reminder_time": "Schickt zu dieser Uhrzeit eine Benachrichtigung mit dem Knopf „Weiterarbeiten“, falls du noch in der Pause bist. Leer = aus."
             }
           },
           "break_check": {

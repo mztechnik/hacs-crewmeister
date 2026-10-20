@@ -260,12 +260,14 @@
               "break_duration": "Break duration",
               "break_end_reminder": "Notify when the break is over",
               "auto_resume": "Resume work automatically after the break",
-              "lunch_break_time": "Start lunch break automatically at"
+              "lunch_break_time": "Start lunch break automatically at",
+              "resume_reminder_time": "Remind to resume work at"
             },
             "data_description": {
               "break_reminder_after": "Continuous working time without a break. 0 = off.",
               "break_duration": "Used for the end-of-break notification, automatic resume and lunch break.",
-              "lunch_break_time": "Starts a break at this time if you are clocked in. Empty = off."
+              "lunch_break_time": "Starts a break at this time if you are clocked in. Empty = off.",
+              "resume_reminder_time": "Sends a notification with a resume button at this time if you are still on a break. Empty = off."
             }
           },
           "break_check": {
