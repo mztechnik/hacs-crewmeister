@@ -1,0 +1,83 @@
+{
+  "entity": {
+    "button": {
+      "clock_in": {
+        "default": "mdi:login"
+      },
+      "start_break": {
+        "default": "mdi:coffee"
+      },
+      "clock_out": {
+        "default": "mdi:logout"
+      }
+    },
+    "sensor": {
+      "status": {
+        "default": "mdi:briefcase-outline",
+        "state": {
+          "clocked_in": "mdi:briefcase-check",
+          "on_break": "mdi:coffee",
+          "clocked_out": "mdi:briefcase-off-outline"
+        }
+      },
+      "last_stamp": {
+        "default": "mdi:clock-check-outline"
+      },
+      "work_time_today": {
+        "default": "mdi:briefcase-clock-outline"
+      },
+      "break_time_today": {
+        "default": "mdi:coffee-outline"
+      },
+      "work_location": {
+        "default": "mdi:map-marker-question-outline",
+        "state": {
+          "office": "mdi:office-building",
+          "home_office": "mdi:home-account",
+          "none": "mdi:home-off-outline"
+        }
+      }
+    },
+    "binary_sensor": {
+      "working": {
+        "default": "mdi:briefcase-outline"
+      },
+      "on_break": {
+        "default": "mdi:coffee-off-outline",
+        "state": {
+          "on": "mdi:coffee"
+        }
+      },
+      "workday": {
+        "default": "mdi:calendar-remove",
+        "state": {
+          "on": "mdi:calendar-check"
+        }
+      },
+      "absent": {
+        "default": "mdi:account-check",
+        "state": {
+          "on": "mdi:beach"
+        }
+      }
+    },
+    "calendar": {
+      "absences": {
+        "default": "mdi:calendar-account"
+      }
+    },
+    "switch": {
+      "auto_stamp": {
+        "default": "mdi:map-marker-off-outline",
+        "state": {
+          "on": "mdi:map-marker-check-outline"
+        }
+      }
+    }
+  },
+  "services": {
+    "create_stamp": {
+      "service": "mdi:clock-plus-outline"
+    }
+  }
+}
