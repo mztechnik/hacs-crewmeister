@@ -15,7 +15,7 @@
 - Ist am selben Tag schon automatisch eingestempelt worden, wird beim nächsten Arbeitsbeginn nachgefragt statt nichts zu tun.
 - Options-Dialog als Menü mit sieben Bereichen (Arbeitszeit, Benachrichtigungen, Büro, Homeoffice, Erinnerungen, Pausen, Erweitert), Kurzbeschreibungen im Menü, Gruppen innerhalb der Formulare und Hinweis, wenn für eine Funktion noch kein Handy ausgewählt ist.
 - **Feierabend-Erinnerung**: Arbeitsbeginn + Soll-Arbeitszeit + Pflichtpause + Karenzzeit, mit Soll-Arbeitszeit pro Wochentag. Die Arbeitszeit-Sensoren zeigen Soll-Arbeitszeit und voraussichtlichen Feierabend als Attribute.
-- **Live-Anzeige** über iOS Live Activities / Android Live Updates (Companion App, HA ≥ 2026.7) mit laufender Uhr, Fortschritt zur Soll-Arbeitszeit und voraussichtlichem Feierabend.
+- **Live-Anzeige** über iOS Live Activities / Android Live Updates (Companion App, HA ≥ 2026.7) mit laufender Uhr, Fortschritt zur Soll-Arbeitszeit und voraussichtlichem Feierabend. Arbeit (blau) und Pause (gelb) sind farblich getrennt, auf Android mit Knöpfen *Pause*, *Weiterarbeiten* und *Ausstempeln*.
 
 ### Sicherheit
 - Die Benutzer-ID wird nur noch aus dem Token gelesen. Bisher wurde ersatzweise der neueste sichtbare Stempel verwendet; bei Vorgesetzten oder Admins konnte das der Stempel eines Kollegen sein, für den dann gestempelt wurde.

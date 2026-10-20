@@ -876,13 +876,20 @@ async def test_live_display(
 
     (live,) = live_calls(notifications)
     assert live.data["title"] == "Crewmeister"
-    assert live.data["message"] == "Since 08:00 · break 0:00 h · done around 16:30"
+    assert live.data["message"] == ("🔵 Working since 08:00 · 🟡 Break 0:00 h · done around 16:30")
     data = live.data["data"]
     assert data["tag"] == tag
     assert data["critical_text"] == "Work"
     assert data["chronometer"] is True
     assert data["when"] == int((NOW - timedelta(hours=2)).timestamp())
     assert (data["progress"], data["progress_max"]) == (120, 480)
+    assert (data["color"], data["background_color"], data["progress_bar_color"]) == (
+        "#03A9F4",
+        "#0B2638",
+        "#03A9F4",
+    )
+    prefix = f"crewmeister:{mock_config_entry.entry_id}"
+    assert actions(live) == [f"{prefix}:START_BREAK", f"{prefix}:CLOCK_OUT"]
     # The ongoing Android notification is replaced by the live display
     assert not [c for c in notifications if c.data["data"].get("persistent")]
 
@@ -897,16 +904,22 @@ async def test_live_display(
         "button", "press", {"entity_id": "button.max_muster_start_break"}, blocking=True
     )
     await hass.async_block_till_done()
-    data = live_calls(notifications)[-1].data["data"]
+    live = live_calls(notifications)[-1]
+    data = live.data["data"]
     assert data["critical_text"] == "Break"
     assert data["when"] == int(dt_util.utcnow().timestamp())
-    assert live_calls(notifications)[-1].data["message"].startswith("Break since 10:15")
+    assert live.data["message"].startswith("🟡 Break since 10:15 · 🔵 Worked 2:15 h today")
+    assert (data["color"], data["background_color"]) == ("#F9A825", "#3A2A06")
+    assert actions(live) == [f"{prefix}:RESUME", f"{prefix}:CLOCK_OUT"]
+
+    # The buttons of the live display stamp directly
+    await advance(hass, freezer, timedelta(minutes=1))
+    await press(hass, f"{prefix}:RESUME")
+    assert stamps(backend)[-1][0] == "START_WORK"
+    assert live_calls(notifications)[-1].data["data"]["critical_text"] == "Work"
 
     # Clocking out ends it
-    await hass.services.async_call(
-        "button", "press", {"entity_id": "button.max_muster_clock_out"}, blocking=True
-    )
-    await hass.async_block_till_done()
+    await press(hass, f"{prefix}:CLOCK_OUT")
     cleared = [c for c in notifications if c.data["message"] == "clear_notification"]
     assert cleared[-1].data["data"]["tag"] == tag
 
@@ -1092,3 +1105,23 @@ async def test_pending_arrival_survives_reload(
     await advance(hass, freezer, timedelta(minutes=1, seconds=1))
 
     assert stamps(clocked_out)[-1] == ("START_WORK", NOW)
+
+
+async def test_live_display_colors_text_on_android(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+) -> None:
+    # Android uses one accent color per notification, but renders the message as HTML
+    MockConfigEntry(
+        domain="mobile_app", data={"device_name": "Phone", "os_name": "Android"}
+    ).add_to_hass(hass)
+    await setup(hass, mock_config_entry, {"notify_targets": [PHONE], "notify_live": True})
+
+    (live,) = live_calls(notifications)
+    assert live.data["message"] == (
+        '<font color="#03A9F4">🔵 Working since 08:00</font> · '
+        '<font color="#F9A825">🟡 Break 0:00 h</font> · done around 16:30'
+    )

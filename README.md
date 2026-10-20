@@ -47,7 +47,9 @@ Hinweise zur Live-Anzeige:
 - Auf iOS ersetzt die laufende Uhr den Text: Dort sind Uhr, Fortschritt in Prozent und Balken zu sehen, der voraussichtliche Feierabend nur auf Android bzw. im Sensor „Arbeitszeit heute“.
 - iOS beendet Live Activities nach spätestens 8 Stunden. Die Integration startet die Anzeige deshalb nach 7,5 Stunden neu.
 - Für iOS-Updates unterwegs braucht die App eine Verbindung zu Home Assistant (Fernzugriff).
-- Knöpfe gibt es in der Live-Anzeige nicht; Pause und Ausstempeln laufen weiter über die normalen Benachrichtigungen.
+- Arbeit und Pause sind farblich getrennt: Arbeit blau, Pause gelb. Android färbt Symbol, Uhr und Balken immer in einer Farbe, die mit dem Status wechselt; im Text sind Arbeits- und Pausenzeit zusätzlich farbig. Auf iOS wechselt die Hintergrundfarbe der Karte.
+- Auf Android hat die Live-Anzeige Knöpfe: *Pause* und *Ausstempeln* bei der Arbeit, *Weiterarbeiten* und *Ausstempeln* in der Pause. iOS erlaubt in Live Activities keine Knöpfe; dort laufen Pause und Ausstempeln weiter über die normalen Benachrichtigungen.
+- Animierte Bilder (GIF) unterstützt die Live-Anzeige auf keiner Plattform, nur Symbole.
 
 ### Dienste & Optionen
 

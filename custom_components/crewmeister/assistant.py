@@ -48,7 +48,16 @@ from .logic.home_office import HomeOfficeEvent, HomeOfficeEventType, HomeOfficeS
 from .logic.texts import format_duration, text
 from .logic.workday import NoWorkReason, no_work_reason
 from .logic.worktime import DaySummary, expected_end, required_break, summarize
-from .notifications import Action, Button, Kind, Notifier, decode_action
+from .notifications import (
+    LIVE_BREAK_COLORS,
+    LIVE_WORK_COLORS,
+    Action,
+    Button,
+    Kind,
+    Notifier,
+    Segment,
+    decode_action,
+)
 
 if TYPE_CHECKING:
     from .coordinator import (
@@ -64,6 +73,7 @@ TICK_INTERVAL = timedelta(minutes=1)
 LIVE_UPDATE_INTERVAL = timedelta(minutes=15)
 # iOS ends Live Activities after at most 8 hours; restart before that
 LIVE_RESTART_AFTER = timedelta(hours=7, minutes=30)
+LIVE_SEPARATOR = " · "
 EVENT_NOTIFICATION_ACTION = "mobile_app_notification_action"
 EVENT_TAG_SCANNED = "tag_scanned"
 # Backdated times offered in notifications must lie in this range around now
@@ -1028,22 +1038,42 @@ class CrewmeisterAssistant:
         if summary.status == WorkStatus.CLOCKED_IN:
             # The timer shows today's work time, breaks excluded
             timer_start = now - summary.work
-            message = self._t(
-                "live_work",
-                start=_hm(summary.shift_start or summary.status_since),
-                breaks=format_duration(summary.breaks),
-            )
+            message = [
+                Segment(
+                    self._t("live_work", start=_hm(summary.shift_start or summary.status_since)),
+                    LIVE_WORK_COLORS.accent,
+                ),
+                Segment(LIVE_SEPARATOR),
+                Segment(
+                    self._t("live_breaks", breaks=format_duration(summary.breaks)),
+                    LIVE_BREAK_COLORS.accent,
+                ),
+            ]
             critical = self._t("live_critical_work")
+            buttons = [
+                Button(self._t("btn_break"), Action.START_BREAK),
+                Button(self._t("btn_clock_out"), Action.CLOCK_OUT),
+            ]
         else:
             timer_start = summary.status_since
-            message = self._t(
-                "live_break",
-                since=_hm(summary.status_since),
-                worked=format_duration(summary.work),
-            )
+            message = [
+                Segment(
+                    self._t("live_break", since=_hm(summary.status_since)),
+                    LIVE_BREAK_COLORS.accent,
+                ),
+                Segment(LIVE_SEPARATOR),
+                Segment(
+                    self._t("live_worked", worked=format_duration(summary.work)),
+                    LIVE_WORK_COLORS.accent,
+                ),
+            ]
             critical = self._t("live_critical_break")
+            buttons = [
+                Button(self._t("btn_resume"), Action.RESUME),
+                Button(self._t("btn_clock_out"), Action.CLOCK_OUT),
+            ]
         if end is not None:
-            message += self._t("live_end", end=_hm(end))
+            message += [Segment(LIVE_SEPARATOR), Segment(self._t("live_end", end=_hm(end)))]
 
         progress = None
         if target is not None:
@@ -1057,6 +1087,7 @@ class CrewmeisterAssistant:
             timer_start=timer_start,
             progress=progress,
             on_break=summary.status == WorkStatus.ON_BREAK,
+            buttons=buttons,
         )
 
     async def _async_check_break(self) -> None:
