@@ -42,7 +42,7 @@ from .api import (
     validate_transition,
 )
 from .const import DOMAIN
-from .helpers import StampDefaults
+from .helpers import StampDefaults, note_with_location
 from .logic.config import AssistantConfig, StampMode
 from .logic.home_office import HomeOfficeEvent, HomeOfficeEventType, HomeOfficeState, advance
 from .logic.texts import format_duration, text
@@ -324,6 +324,17 @@ class CrewmeisterAssistant:
         if location == LOCATION_HOME_OFFICE:
             return cfg.location_home_office or self._t("location_home_office")
         return None
+
+    def stamp_note_and_location(
+        self, note: str | None, location: str | None = None
+    ) -> tuple[str | None, str | None]:
+        """Return note and location of a stamp; ``location`` defaults to the detected one."""
+
+        return note_with_location(
+            note,
+            location if location is not None else self.stamp_location(),
+            as_note=self.config.location_as_note,
+        )
 
     def _location_changed(self, previous: str) -> None:
         location = self.work_location
@@ -1212,12 +1223,13 @@ class CrewmeisterAssistant:
                 await self._async_failure(self._t("error_outdated"))
             return False
 
+        note, location = self.stamp_note_and_location(self._defaults.note)
         try:
             await self._client.async_create_stamp(
                 stamp_type,
                 timestamp=at,
-                note=self._defaults.note,
-                location=self.stamp_location(),
+                note=note,
+                location=location,
                 time_account_id=self._defaults.time_account_id,
             )
         except CrewmeisterError as err:

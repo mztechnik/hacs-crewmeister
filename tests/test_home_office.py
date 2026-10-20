@@ -299,3 +299,29 @@ async def test_idle_pc_at_home_does_not_end_office_shift(
 
     await advance(hass, freezer, timedelta(hours=2))
     assert stamps(clocked_out)[-1][0] == "START_WORK"
+
+
+async def test_location_as_note(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    clocked_out: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    # For accounts that may not set the location of a stamp
+    await setup(
+        hass,
+        mock_config_entry,
+        {**OPTIONS, "stamp_location": True, "location_as_note": True, "stamp_note": "HA"},
+    )
+
+    await set_state(hass, POWER, "85")
+    await advance(hass, freezer, timedelta(minutes=5))
+    kwargs = mock_client.async_create_stamp.await_args.kwargs
+    assert (kwargs["note"], kwargs["location"]) == ("HA · Home office", None)
+
+    await hass.services.async_call(
+        "button", "press", {"entity_id": "button.max_muster_clock_out"}, blocking=True
+    )
+    kwargs = mock_client.async_create_stamp.await_args.kwargs
+    assert (kwargs["note"], kwargs["location"]) == ("HA · Home office", None)

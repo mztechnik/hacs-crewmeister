@@ -76,6 +76,20 @@ def clean_note(value: Any) -> str | None:
     return None
 
 
+def note_with_location(
+    note: str | None, location: str | None, *, as_note: bool
+) -> tuple[str | None, str | None]:
+    """Return the ``(note, location)`` to send with a stamp.
+
+    With ``as_note`` the location is appended to the note instead, for accounts
+    that are not allowed to set the location of a stamp.
+    """
+
+    if not as_note or not location:
+        return note, location
+    return (f"{note} · {location}" if note else location), None
+
+
 def positive_int(value: Any) -> int | None:
     """Return ``value`` as a positive integer or ``None``."""
 

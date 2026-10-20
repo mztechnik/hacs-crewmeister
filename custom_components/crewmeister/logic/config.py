@@ -35,6 +35,7 @@ from ..const import (
     CONF_HO_SHORT_BREAK,
     CONF_HO_WINDOW_END,
     CONF_HO_WINDOW_START,
+    CONF_LOCATION_AS_NOTE,
     CONF_LOCATION_HOME_OFFICE,
     CONF_LOCATION_OFFICE,
     CONF_LUNCH_BREAK_TIME,
@@ -116,6 +117,7 @@ DEFAULTS: dict[str, Any] = {
     CONF_HO_WINDOW_START: "06:00:00",
     CONF_HO_WINDOW_END: "19:00:00",
     CONF_STAMP_LOCATION: False,
+    CONF_LOCATION_AS_NOTE: False,
 }
 
 
@@ -164,6 +166,7 @@ class AssistantConfig:
     stamp_location: bool = False
     location_office: str | None = None
     location_home_office: str | None = None
+    location_as_note: bool = False
 
     remind_on_leave: bool = True
     reminder_time: time | None = None
@@ -272,6 +275,7 @@ class AssistantConfig:
             stamp_location=bool(get(CONF_STAMP_LOCATION)),
             location_office=_text(options.get(CONF_LOCATION_OFFICE)),
             location_home_office=_text(options.get(CONF_LOCATION_HOME_OFFICE)),
+            location_as_note=bool(get(CONF_LOCATION_AS_NOTE)),
             remind_on_leave=bool(get(CONF_REMIND_ON_LEAVE)),
             reminder_time=_time(options.get(CONF_REMINDER_TIME)),
             max_work=optional_hours(CONF_MAX_WORK_HOURS),

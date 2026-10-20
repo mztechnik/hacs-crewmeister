@@ -57,6 +57,7 @@ from .const import (
     CONF_HO_SHORT_BREAK,
     CONF_HO_WINDOW_END,
     CONF_HO_WINDOW_START,
+    CONF_LOCATION_AS_NOTE,
     CONF_LOCATION_HOME_OFFICE,
     CONF_LOCATION_OFFICE,
     CONF_LUNCH_BREAK_TIME,
@@ -313,6 +314,7 @@ ADVANCED_SCHEMA = vol.Schema(
                 vol.Required(CONF_STAMP_LOCATION): BooleanSelector(),
                 vol.Optional(CONF_LOCATION_OFFICE): TextSelector(),
                 vol.Optional(CONF_LOCATION_HOME_OFFICE): TextSelector(),
+                vol.Required(CONF_LOCATION_AS_NOTE): BooleanSelector(),
             },
             collapsed=True,
         ),
@@ -369,6 +371,7 @@ def _clean_advanced(values: dict[str, Any]) -> dict[str, Any]:
         CONF_STAMP_LOCATION: bool(values.get(CONF_STAMP_LOCATION)),
         CONF_LOCATION_OFFICE: clean_note(values.get(CONF_LOCATION_OFFICE)),
         CONF_LOCATION_HOME_OFFICE: clean_note(values.get(CONF_LOCATION_HOME_OFFICE)),
+        CONF_LOCATION_AS_NOTE: bool(values.get(CONF_LOCATION_AS_NOTE)),
     }
 
 
@@ -454,6 +457,7 @@ class CrewmeisterOptionsFlow(OptionsFlowWithReload):
             CONF_STAMP_LOCATION: bool(current.get(CONF_STAMP_LOCATION, False)),
             CONF_LOCATION_OFFICE: current.get(CONF_LOCATION_OFFICE),
             CONF_LOCATION_HOME_OFFICE: current.get(CONF_LOCATION_HOME_OFFICE),
+            CONF_LOCATION_AS_NOTE: bool(current.get(CONF_LOCATION_AS_NOTE, False)),
         }
         return self._form("advanced", ADVANCED_SCHEMA, user_input, _clean_advanced, suggested)
 

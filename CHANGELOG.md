@@ -11,7 +11,7 @@
   - Pausenassistent: Pausenerinnerung, Pausenende/automatisch weiterarbeiten, automatische Mittagspause, Pausenprüfung nach ArbZG mit Nachtragen der fehlenden Pause in Crewmeister.
 - **Homeoffice-Erkennung** über Steckdose mit Leistungsmessung und Präsenzmelder/PC-Status (Person zu Hause, Arbeitstag, Zeitfenster) mit automatischem bzw. nachfragendem Ein- und Ausstempeln und Pause bei kurzer Inaktivität. Ersetzt die Homeoffice-Nachfrage zu fester Uhrzeit.
 - Sensor **Arbeitsort** (Büro / Homeoffice / Nicht bei der Arbeit).
-- Optional **Ort am Stempel** („Büro“ / „Homeoffice“, Texte anpassbar).
+- Optional **Ort am Stempel** („Büro“ / „Homeoffice“, Texte anpassbar), wahlweise als Notiz für Konten ohne Berechtigung für den Ort.
 - Ist am selben Tag schon automatisch eingestempelt worden, wird beim nächsten Arbeitsbeginn nachgefragt statt nichts zu tun.
 - Options-Dialog als Menü mit sieben Bereichen (Arbeitszeit, Benachrichtigungen, Büro, Homeoffice, Erinnerungen, Pausen, Erweitert), Kurzbeschreibungen im Menü, Gruppen innerhalb der Formulare und Hinweis, wenn für eine Funktion noch kein Handy ausgewählt ist.
 - **Feierabend-Erinnerung**: Arbeitsbeginn + Soll-Arbeitszeit + Pflichtpause + Karenzzeit, mit Soll-Arbeitszeit pro Wochentag. Die Arbeitszeit-Sensoren zeigen Soll-Arbeitszeit und voraussichtlichen Feierabend als Attribute.

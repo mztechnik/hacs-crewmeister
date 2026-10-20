@@ -302,11 +302,13 @@
             "data": {
               "stamp_location": "Send work location",
               "location_office": "Text for office",
-              "location_home_office": "Text for home office"
+              "location_home_office": "Text for home office",
+              "location_as_note": "Send location as note"
             },
             "data_description": {
               "location_office": "Empty = “Office”",
-              "location_home_office": "Empty = “Home office”"
+              "location_home_office": "Empty = “Home office”",
+              "location_as_note": "For accounts that are not allowed to set the location of a stamp (error when stamping): the location is appended to the note instead."
             }
           }
         }

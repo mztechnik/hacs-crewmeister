@@ -76,6 +76,8 @@ CONF_HO_WINDOW_END: Final = "home_office_window_end"
 CONF_STAMP_LOCATION: Final = "stamp_location"
 CONF_LOCATION_OFFICE: Final = "location_office"
 CONF_LOCATION_HOME_OFFICE: Final = "location_home_office"
+# Send the location inside the note, e.g. if the account may not set the location
+CONF_LOCATION_AS_NOTE: Final = "location_as_note"
 
 # Options: reminders
 CONF_REMIND_ON_LEAVE: Final = "remind_on_leave"

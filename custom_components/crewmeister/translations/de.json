@@ -302,11 +302,13 @@
             "data": {
               "stamp_location": "Arbeitsort mitsenden",
               "location_office": "Text für Büro",
-              "location_home_office": "Text für Homeoffice"
+              "location_home_office": "Text für Homeoffice",
+              "location_as_note": "Ort als Notiz senden"
             },
             "data_description": {
               "location_office": "Leer = „Büro“",
-              "location_home_office": "Leer = „Homeoffice“"
+              "location_home_office": "Leer = „Homeoffice“",
+              "location_as_note": "Für Konten, die den Ort eines Stempels nicht setzen dürfen (Fehler beim Stempeln): Der Ort wird stattdessen an die Notiz angehängt."
             }
           }
         }
