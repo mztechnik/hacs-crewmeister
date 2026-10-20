@@ -877,7 +877,7 @@ async def test_live_display(
 
     (live,) = live_calls(notifications)
     assert live.data["title"] == "Crewmeister"
-    assert live.data["message"] == ("🔵 Working since 08:00 · 🟡 Break 0:00 h · done around 16:30")
+    assert live.data["message"] == ("Working since 08:00 · Break 0:00 h · done around 16:30")
     data = live.data["data"]
     assert data["tag"] == tag
     assert data["critical_text"] == "Work"
@@ -909,7 +909,7 @@ async def test_live_display(
     data = live.data["data"]
     assert data["critical_text"] == "Break"
     assert data["when"] == int(dt_util.utcnow().timestamp())
-    assert live.data["message"].startswith("🟡 Break since 10:15 · 🔵 Worked 2:15 h today")
+    assert live.data["message"].startswith("Break since 10:15 · Worked 2:15 h today")
     assert (data["color"], data["background_color"]) == ("#F9A825", "#3A2A06")
     assert actions(live) == [f"{prefix}:RESUME", f"{prefix}:CLOCK_OUT"]
 
@@ -1123,8 +1123,8 @@ async def test_live_display_colors_text_on_android(
 
     (live,) = live_calls(notifications)
     assert live.data["message"] == (
-        '<font color="#03A9F4">🔵 Working since 08:00</font> · '
-        '<font color="#F9A825">🟡 Break 0:00 h</font> · done around 16:30'
+        '<font color="#03A9F4">Working since 08:00</font> · '
+        '<font color="#F9A825">Break 0:00 h</font> · done around 16:30'
     )
 
 

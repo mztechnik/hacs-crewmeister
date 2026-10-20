@@ -84,9 +84,9 @@ Vorlage für das Android-Widget (einfaches HTML wie `<b>`, `<br>` und `<font col
 {% set status = states(s) %}
 {% set min = states(w) | float(0) | int %}
 {% set ende = state_attr(w, 'expected_end') %}
-{% if status == 'clocked_in' %}<font color="#03A9F4"><b>🔵 Bei der Arbeit</b></font>
-{% elif status == 'on_break' %}<font color="#F9A825"><b>🟡 Pause</b></font>
-{% else %}<b>⚪ Ausgestempelt</b>{% endif %}<br>
+{% if status == 'clocked_in' %}<font color="#03A9F4"><b>Bei der Arbeit</b></font>
+{% elif status == 'on_break' %}<font color="#F9A825"><b>Pause</b></font>
+{% else %}<b>Ausgestempelt</b>{% endif %}<br>
 Arbeitszeit {{ min // 60 }}:{{ '%02d' % (min % 60) }} h
 {% if ende and status != 'clocked_out' %} · Feierabend ca. {{ as_timestamp(ende) | timestamp_custom('%H:%M') }}{% endif %}
 ```
