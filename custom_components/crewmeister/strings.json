@@ -93,13 +93,17 @@
           "notify_targets": "Devices",
           "notify_confirmations": "Confirm stamps",
           "notify_live": "Live display (iOS Live Activity / Android Live Update)",
-          "notify_status": "Ongoing status notification (Android)"
+          "notify_status": "Ongoing status notification (Android)",
+          "live_icon_work": "Icon at work",
+          "live_icon_break": "Icon during breaks"
         },
         "data_description": {
           "notify_targets": "Home Assistant Companion App devices (notify.mobile_app_…). Without a device no notifications are sent.",
           "notify_confirmations": "Send a short confirmation after each stamp made by the assistant.",
           "notify_live": "Shows work time with a running timer, progress towards your target time and the expected end of day on the lock screen. Requires Home Assistant 2026.7, iOS 17.2 or the current Android app. Replaces the ongoing status notification.",
-          "notify_status": "Shows a permanent notification with a running timer and buttons while you work. Not used if the live display is on."
+          "notify_status": "Shows a permanent notification with a running timer and buttons while you work. Not used if the live display is on.",
+          "live_icon_work": "Shown in the live display, e.g. mdi:account-hard-hat.",
+          "live_icon_break": "Shown in the live display, e.g. mdi:pretzel."
         }
       },
       "auto_stamp": {
@@ -256,12 +260,14 @@
               "break_duration": "Break duration",
               "break_end_reminder": "Notify when the break is over",
               "auto_resume": "Resume work automatically after the break",
-              "lunch_break_time": "Start lunch break automatically at"
+              "lunch_break_time": "Start lunch break automatically at",
+              "resume_reminder_time": "Remind to resume work at"
             },
             "data_description": {
               "break_reminder_after": "Continuous working time without a break. 0 = off.",
               "break_duration": "Used for the end-of-break notification, automatic resume and lunch break.",
-              "lunch_break_time": "Starts a break at this time if you are clocked in. Empty = off."
+              "lunch_break_time": "Starts a break at this time if you are clocked in. Empty = off.",
+              "resume_reminder_time": "Sends a notification with a resume button at this time if you are still on a break. Empty = off."
             }
           },
           "break_check": {
@@ -302,11 +308,13 @@
             "data": {
               "stamp_location": "Send work location",
               "location_office": "Text for office",
-              "location_home_office": "Text for home office"
+              "location_home_office": "Text for home office",
+              "location_as_note": "Send location as note"
             },
             "data_description": {
               "location_office": "Empty = “Office”",
-              "location_home_office": "Empty = “Home office”"
+              "location_home_office": "Empty = “Home office”",
+              "location_as_note": "For accounts that are not allowed to set the location of a stamp (error when stamping): the location is appended to the note instead."
             }
           }
         }
@@ -316,19 +324,19 @@
   "selector": {
     "absence_states": {
       "options": {
-        "APPROVED": "Approved",
-        "PRE_APPROVED": "Pre-approved",
-        "REQUESTED": "Requested",
-        "REJECTED": "Rejected",
-        "DRAFT": "Draft",
-        "REVOKED": "Revoked"
+        "approved": "Approved",
+        "pre_approved": "Pre-approved",
+        "requested": "Requested",
+        "rejected": "Rejected",
+        "draft": "Draft",
+        "revoked": "Revoked"
       }
     },
     "stamp_type": {
       "options": {
-        "START_WORK": "Start work",
-        "START_BREAK": "Start break",
-        "CLOCK_OUT": "Clock out"
+        "start_work": "Start work",
+        "start_break": "Start break",
+        "clock_out": "Clock out"
       }
     },
     "weekday": {

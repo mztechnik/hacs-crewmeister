@@ -42,13 +42,22 @@ from .api import (
     validate_transition,
 )
 from .const import DOMAIN
-from .helpers import StampDefaults
+from .helpers import StampDefaults, note_with_location
 from .logic.config import AssistantConfig, StampMode
 from .logic.home_office import HomeOfficeEvent, HomeOfficeEventType, HomeOfficeState, advance
 from .logic.texts import format_duration, text
 from .logic.workday import NoWorkReason, no_work_reason
 from .logic.worktime import DaySummary, expected_end, required_break, summarize
-from .notifications import Action, Button, Kind, Notifier, decode_action
+from .notifications import (
+    LIVE_BREAK_COLORS,
+    LIVE_WORK_COLORS,
+    Action,
+    Button,
+    Kind,
+    Notifier,
+    Segment,
+    decode_action,
+)
 
 if TYPE_CHECKING:
     from .coordinator import (
@@ -64,6 +73,7 @@ TICK_INTERVAL = timedelta(minutes=1)
 LIVE_UPDATE_INTERVAL = timedelta(minutes=15)
 # iOS ends Live Activities after at most 8 hours; restart before that
 LIVE_RESTART_AFTER = timedelta(hours=7, minutes=30)
+LIVE_SEPARATOR = " · "
 EVENT_NOTIFICATION_ACTION = "mobile_app_notification_action"
 EVENT_TAG_SCANNED = "tag_scanned"
 # Backdated times offered in notifications must lie in this range around now
@@ -225,6 +235,7 @@ class CrewmeisterAssistant:
             (cfg.reminder_time, self._async_reminder_time),
             (cfg.forgotten_check_time, self._async_forgotten_check),
             (cfg.lunch_break_time, self._async_lunch_break),
+            (cfg.resume_reminder_time, self._async_resume_reminder),
         ):
             if at is not None:
                 self._unsubs.append(
@@ -314,6 +325,17 @@ class CrewmeisterAssistant:
         if location == LOCATION_HOME_OFFICE:
             return cfg.location_home_office or self._t("location_home_office")
         return None
+
+    def stamp_note_and_location(
+        self, note: str | None, location: str | None = None
+    ) -> tuple[str | None, str | None]:
+        """Return note and location of a stamp; ``location`` defaults to the detected one."""
+
+        return note_with_location(
+            note,
+            location if location is not None else self.stamp_location(),
+            as_note=self.config.location_as_note,
+        )
 
     def _location_changed(self, previous: str) -> None:
         location = self.work_location
@@ -947,6 +969,24 @@ class CrewmeisterAssistant:
         if summary is not None and summary.status == WorkStatus.CLOCKED_IN:
             await self._async_stamp(StampType.START_BREAK, automatic=True)
 
+    async def _async_resume_reminder(self, _now: datetime) -> None:
+        """Remind to resume work at a fixed time if the break is still running."""
+
+        summary = await self._async_fresh_summary()
+        if summary is None or summary.status != WorkStatus.ON_BREAK or not summary.status_since:
+            return
+        await self._notifier.async_send(
+            Kind.BREAK,
+            self._t("resume_time_title"),
+            self._t(
+                "resume_time_message",
+                since=_hm(summary.status_since),
+                duration=format_duration(summary.current_break),
+            ),
+            [Button(self._t("btn_resume"), Action.RESUME)],
+            time_sensitive=True,
+        )
+
     # -------------------------------------------------------------- status changes
 
     @callback
@@ -1028,22 +1068,42 @@ class CrewmeisterAssistant:
         if summary.status == WorkStatus.CLOCKED_IN:
             # The timer shows today's work time, breaks excluded
             timer_start = now - summary.work
-            message = self._t(
-                "live_work",
-                start=_hm(summary.shift_start or summary.status_since),
-                breaks=format_duration(summary.breaks),
-            )
+            message = [
+                Segment(
+                    self._t("live_work", start=_hm(summary.shift_start or summary.status_since)),
+                    LIVE_WORK_COLORS.accent,
+                ),
+                Segment(LIVE_SEPARATOR),
+                Segment(
+                    self._t("live_breaks", breaks=format_duration(summary.breaks)),
+                    LIVE_BREAK_COLORS.accent,
+                ),
+            ]
             critical = self._t("live_critical_work")
+            buttons = [
+                Button(self._t("btn_break"), Action.START_BREAK),
+                Button(self._t("btn_clock_out"), Action.CLOCK_OUT),
+            ]
         else:
             timer_start = summary.status_since
-            message = self._t(
-                "live_break",
-                since=_hm(summary.status_since),
-                worked=format_duration(summary.work),
-            )
+            message = [
+                Segment(
+                    self._t("live_break", since=_hm(summary.status_since)),
+                    LIVE_BREAK_COLORS.accent,
+                ),
+                Segment(LIVE_SEPARATOR),
+                Segment(
+                    self._t("live_worked", worked=format_duration(summary.work)),
+                    LIVE_WORK_COLORS.accent,
+                ),
+            ]
             critical = self._t("live_critical_break")
+            buttons = [
+                Button(self._t("btn_resume"), Action.RESUME),
+                Button(self._t("btn_clock_out"), Action.CLOCK_OUT),
+            ]
         if end is not None:
-            message += self._t("live_end", end=_hm(end))
+            message += [Segment(LIVE_SEPARATOR), Segment(self._t("live_end", end=_hm(end)))]
 
         progress = None
         if target is not None:
@@ -1057,6 +1117,10 @@ class CrewmeisterAssistant:
             timer_start=timer_start,
             progress=progress,
             on_break=summary.status == WorkStatus.ON_BREAK,
+            buttons=buttons,
+            icon=self.config.live_icon_break
+            if summary.status == WorkStatus.ON_BREAK
+            else self.config.live_icon_work,
         )
 
     async def _async_check_break(self) -> None:
@@ -1181,12 +1245,13 @@ class CrewmeisterAssistant:
                 await self._async_failure(self._t("error_outdated"))
             return False
 
+        note, location = self.stamp_note_and_location(self._defaults.note)
         try:
             await self._client.async_create_stamp(
                 stamp_type,
                 timestamp=at,
-                note=self._defaults.note,
-                location=self.stamp_location(),
+                note=note,
+                location=location,
                 time_account_id=self._defaults.time_account_id,
             )
         except CrewmeisterError as err:

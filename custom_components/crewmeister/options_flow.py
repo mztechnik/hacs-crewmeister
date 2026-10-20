@@ -16,6 +16,7 @@ from homeassistant.helpers.selector import (
     BooleanSelector,
     EntitySelector,
     EntitySelectorConfig,
+    IconSelector,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -57,6 +58,9 @@ from .const import (
     CONF_HO_SHORT_BREAK,
     CONF_HO_WINDOW_END,
     CONF_HO_WINDOW_START,
+    CONF_LIVE_ICON_BREAK,
+    CONF_LIVE_ICON_WORK,
+    CONF_LOCATION_AS_NOTE,
     CONF_LOCATION_HOME_OFFICE,
     CONF_LOCATION_OFFICE,
     CONF_LUNCH_BREAK_TIME,
@@ -71,6 +75,7 @@ from .const import (
     CONF_PRESENCE_ENTITIES,
     CONF_REMIND_ON_LEAVE,
     CONF_REMINDER_TIME,
+    CONF_RESUME_REMINDER_TIME,
     CONF_SHORT_LEAVE_BREAK,
     CONF_SNOOZE_MINUTES,
     CONF_STAMP_LOCATION,
@@ -272,6 +277,7 @@ BREAKS_SCHEMA = vol.Schema(
                 vol.Required(CONF_BREAK_END_REMINDER): BooleanSelector(),
                 vol.Required(CONF_AUTO_RESUME): BooleanSelector(),
                 vol.Optional(CONF_LUNCH_BREAK_TIME): TimeSelector(),
+                vol.Optional(CONF_RESUME_REMINDER_TIME): TimeSelector(),
             }
         ),
         vol.Required("break_check"): _section(
@@ -298,7 +304,7 @@ ADVANCED_SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_ABSENCE_STATES): SelectSelector(
             SelectSelectorConfig(
-                options=ABSENCE_STATES,
+                options=[state.lower() for state in ABSENCE_STATES],
                 multiple=True,
                 mode=SelectSelectorMode.LIST,
                 translation_key=CONF_ABSENCE_STATES,
@@ -313,6 +319,7 @@ ADVANCED_SCHEMA = vol.Schema(
                 vol.Required(CONF_STAMP_LOCATION): BooleanSelector(),
                 vol.Optional(CONF_LOCATION_OFFICE): TextSelector(),
                 vol.Optional(CONF_LOCATION_HOME_OFFICE): TextSelector(),
+                vol.Required(CONF_LOCATION_AS_NOTE): BooleanSelector(),
             },
             collapsed=True,
         ),
@@ -369,6 +376,7 @@ def _clean_advanced(values: dict[str, Any]) -> dict[str, Any]:
         CONF_STAMP_LOCATION: bool(values.get(CONF_STAMP_LOCATION)),
         CONF_LOCATION_OFFICE: clean_note(values.get(CONF_LOCATION_OFFICE)),
         CONF_LOCATION_HOME_OFFICE: clean_note(values.get(CONF_LOCATION_HOME_OFFICE)),
+        CONF_LOCATION_AS_NOTE: bool(values.get(CONF_LOCATION_AS_NOTE)),
     }
 
 
@@ -409,6 +417,8 @@ class CrewmeisterOptionsFlow(OptionsFlowWithReload):
                 ),
                 vol.Required(CONF_NOTIFY_CONFIRMATIONS): BooleanSelector(),
                 vol.Required(CONF_NOTIFY_LIVE): BooleanSelector(),
+                vol.Optional(CONF_LIVE_ICON_WORK): IconSelector(),
+                vol.Optional(CONF_LIVE_ICON_BREAK): IconSelector(),
                 vol.Required(CONF_NOTIFY_STATUS): BooleanSelector(),
             }
         )
@@ -448,12 +458,13 @@ class CrewmeisterOptionsFlow(OptionsFlowWithReload):
         current = self.config_entry.options
         suggested = {
             CONF_UPDATE_INTERVAL: update_interval_seconds(current),
-            CONF_ABSENCE_STATES: absence_states(current),
+            CONF_ABSENCE_STATES: [state.lower() for state in absence_states(current)],
             CONF_STAMP_NOTE: clean_note(current.get(CONF_STAMP_NOTE)),
             CONF_STAMP_TIME_ACCOUNT_ID: positive_int(current.get(CONF_STAMP_TIME_ACCOUNT_ID)),
             CONF_STAMP_LOCATION: bool(current.get(CONF_STAMP_LOCATION, False)),
             CONF_LOCATION_OFFICE: current.get(CONF_LOCATION_OFFICE),
             CONF_LOCATION_HOME_OFFICE: current.get(CONF_LOCATION_HOME_OFFICE),
+            CONF_LOCATION_AS_NOTE: bool(current.get(CONF_LOCATION_AS_NOTE, False)),
         }
         return self._form("advanced", ADVANCED_SCHEMA, user_input, _clean_advanced, suggested)
 

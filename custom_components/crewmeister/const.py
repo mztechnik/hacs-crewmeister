@@ -42,6 +42,10 @@ CONF_NOTIFY_TARGETS: Final = "notify_targets"
 CONF_NOTIFY_CONFIRMATIONS: Final = "notify_confirmations"
 CONF_NOTIFY_STATUS: Final = "notify_status"
 CONF_NOTIFY_LIVE: Final = "notify_live"
+CONF_LIVE_ICON_WORK: Final = "live_icon_work"
+CONF_LIVE_ICON_BREAK: Final = "live_icon_break"
+DEFAULT_LIVE_ICON_WORK: Final = "mdi:briefcase-clock"
+DEFAULT_LIVE_ICON_BREAK: Final = "mdi:coffee"
 
 # Options: automatic stamping
 CONF_PERSON: Final = "person"
@@ -76,6 +80,8 @@ CONF_HO_WINDOW_END: Final = "home_office_window_end"
 CONF_STAMP_LOCATION: Final = "stamp_location"
 CONF_LOCATION_OFFICE: Final = "location_office"
 CONF_LOCATION_HOME_OFFICE: Final = "location_home_office"
+# Send the location inside the note, e.g. if the account may not set the location
+CONF_LOCATION_AS_NOTE: Final = "location_as_note"
 
 # Options: reminders
 CONF_REMIND_ON_LEAVE: Final = "remind_on_leave"
@@ -95,6 +101,7 @@ CONF_BREAK_CHECK: Final = "break_check"
 CONF_BREAK_AFTER_6H: Final = "break_after_6h"
 CONF_BREAK_AFTER_9H: Final = "break_after_9h"
 CONF_LUNCH_BREAK_TIME: Final = "lunch_break_time"
+CONF_RESUME_REMINDER_TIME: Final = "resume_reminder_time"
 
 DEFAULT_BASE_URL: Final = "https://api.crewmeister.com"
 

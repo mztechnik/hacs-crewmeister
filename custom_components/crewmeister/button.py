@@ -86,11 +86,12 @@ class CrewmeisterStampButton(CrewmeisterEntity[CrewmeisterStatusCoordinator], Bu
                 ) from err
 
         defaults = self._runtime.stamp_defaults
+        note, location = self._runtime.assistant.stamp_note_and_location(defaults.note)
         try:
             await self._runtime.client.async_create_stamp(
                 stamp_type,
-                note=defaults.note,
-                location=self._runtime.assistant.stamp_location(),
+                note=note,
+                location=location,
                 time_account_id=defaults.time_account_id,
             )
         except CrewmeisterError as err:

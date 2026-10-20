@@ -557,3 +557,20 @@ async def test_absences_retry_soon_when_first_refresh_fails(
     await hass.async_block_till_done()
 
     assert hass.states.get(CALENDAR).state != STATE_UNAVAILABLE
+
+
+async def test_service_location_as_note(
+    hass: HomeAssistant, mock_client: AsyncMock, mock_config_entry: MockConfigEntry
+) -> None:
+    mock_config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(mock_config_entry, options={"location_as_note": True})
+    await setup_entry(hass, mock_config_entry)
+
+    # Lowercase values come from the selector in the UI
+    await hass.services.async_call(
+        DOMAIN, "create_stamp", {"stamp_type": "start_work", "location": "Kunde"}, blocking=True
+    )
+
+    call = mock_client.async_create_stamp.await_args
+    assert call.args == (StampType.START_WORK,)
+    assert (call.kwargs["note"], call.kwargs["location"]) == ("Kunde", None)

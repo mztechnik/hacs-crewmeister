@@ -54,7 +54,8 @@ def absence_states(options: dict[str, Any]) -> list[str]:
     value = options.get(CONF_ABSENCE_STATES)
     if isinstance(value, str):
         value = [value]
-    states = sorted({s for s in value or () if s in ABSENCE_STATES})
+    # Selectors use lowercase values (translation keys), the API uppercase ones
+    states = sorted({str(s).upper() for s in value or ()} & set(ABSENCE_STATES))
     return states or list(DEFAULT_ABSENCE_STATES)
 
 
@@ -73,6 +74,20 @@ def clean_note(value: Any) -> str | None:
     if isinstance(value, str):
         return value.strip() or None
     return None
+
+
+def note_with_location(
+    note: str | None, location: str | None, *, as_note: bool
+) -> tuple[str | None, str | None]:
+    """Return the ``(note, location)`` to send with a stamp.
+
+    With ``as_note`` the location is appended to the note instead, for accounts
+    that are not allowed to set the location of a stamp.
+    """
+
+    if not as_note or not location:
+        return note, location
+    return (f"{note} · {location}" if note else location), None
 
 
 def positive_int(value: Any) -> int | None:

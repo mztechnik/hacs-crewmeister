@@ -6,9 +6,9 @@ create_stamp:
         select:
           translation_key: stamp_type
           options:
-            - START_WORK
-            - START_BREAK
-            - CLOCK_OUT
+            - start_work
+            - start_break
+            - clock_out
     timestamp:
       selector:
         datetime:

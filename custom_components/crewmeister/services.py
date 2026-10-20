@@ -21,11 +21,12 @@ from .const import (
     SERVICE_CREATE_STAMP,
 )
 from .coordinator import CrewmeisterConfigEntry
-from .helpers import clean_note
+from .helpers import clean_note, note_with_location
 
 SERVICE_SCHEMA_CREATE_STAMP = vol.Schema(
     {
-        vol.Required(ATTR_STAMP_TYPE): vol.All(cv.string, vol.Coerce(StampType)),
+        # The selector sends lowercase values; uppercase keeps older automations working
+        vol.Required(ATTR_STAMP_TYPE): vol.All(cv.string, vol.Upper, vol.Coerce(StampType)),
         vol.Optional(ATTR_TIMESTAMP): cv.datetime,
         vol.Optional(ATTR_NOTE): vol.Any(cv.string, None),
         vol.Optional(ATTR_LOCATION): vol.Any(cv.string, None),
@@ -88,13 +89,18 @@ async def _async_create_stamp(hass: HomeAssistant, call: ServiceCall) -> None:
     note = call.data.get(ATTR_NOTE, defaults.note)
     time_account_id = call.data.get(ATTR_TIME_ACCOUNT_ID, defaults.time_account_id)
 
+    note, location = note_with_location(
+        clean_note(note),
+        clean_note(call.data.get(ATTR_LOCATION)),
+        as_note=runtime.config.location_as_note,
+    )
     timestamp = call.data.get(ATTR_TIMESTAMP)
     try:
         await runtime.client.async_create_stamp(
             call.data[ATTR_STAMP_TYPE],
             timestamp=dt_util.as_utc(timestamp) if timestamp else None,
-            note=clean_note(note),
-            location=clean_note(call.data.get(ATTR_LOCATION)),
+            note=note,
+            location=location,
             time_account_id=time_account_id or None,
         )
     except CrewmeisterError as err:

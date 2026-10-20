@@ -93,13 +93,17 @@
           "notify_targets": "Geräte",
           "notify_confirmations": "Stempelungen bestätigen",
           "notify_live": "Live-Anzeige (iOS Live Activity / Android Live Update)",
-          "notify_status": "Dauerhafte Statusanzeige (Android)"
+          "notify_status": "Dauerhafte Statusanzeige (Android)",
+          "live_icon_work": "Symbol bei der Arbeit",
+          "live_icon_break": "Symbol in der Pause"
         },
         "data_description": {
           "notify_targets": "Geräte mit der Home Assistant Companion App (notify.mobile_app_…). Ohne Gerät werden keine Benachrichtigungen gesendet.",
           "notify_confirmations": "Nach jeder Stempelung durch den Assistenten kommt eine kurze Bestätigung.",
           "notify_live": "Zeigt Arbeitszeit mit laufender Uhr, Fortschritt zur Soll-Arbeitszeit und den voraussichtlichen Feierabend auf dem Sperrbildschirm. Benötigt Home Assistant 2026.7, iOS 17.2 bzw. die aktuelle Android-App. Ersetzt die dauerhafte Statusanzeige.",
-          "notify_status": "Zeigt während der Arbeit eine dauerhafte Benachrichtigung mit laufender Uhr und Knöpfen. Wird nicht genutzt, wenn die Live-Anzeige an ist."
+          "notify_status": "Zeigt während der Arbeit eine dauerhafte Benachrichtigung mit laufender Uhr und Knöpfen. Wird nicht genutzt, wenn die Live-Anzeige an ist.",
+          "live_icon_work": "Wird in der Live-Anzeige gezeigt, z. B. mdi:account-hard-hat (Bauarbeiter).",
+          "live_icon_break": "Wird in der Live-Anzeige gezeigt, z. B. mdi:pretzel (Brezel)."
         }
       },
       "auto_stamp": {
@@ -256,12 +260,14 @@
               "break_duration": "Pausendauer",
               "break_end_reminder": "Benachrichtigen, wenn die Pause vorbei ist",
               "auto_resume": "Nach der Pause automatisch weiterarbeiten",
-              "lunch_break_time": "Mittagspause automatisch starten um"
+              "lunch_break_time": "Mittagspause automatisch starten um",
+              "resume_reminder_time": "Ans Weiterarbeiten erinnern um"
             },
             "data_description": {
               "break_reminder_after": "Durchgehende Arbeitszeit ohne Pause. 0 = aus.",
               "break_duration": "Für die Benachrichtigung am Pausenende, das automatische Weiterarbeiten und die Mittagspause.",
-              "lunch_break_time": "Startet zu dieser Uhrzeit eine Pause, falls du eingestempelt bist. Leer = aus."
+              "lunch_break_time": "Startet zu dieser Uhrzeit eine Pause, falls du eingestempelt bist. Leer = aus.",
+              "resume_reminder_time": "Schickt zu dieser Uhrzeit eine Benachrichtigung mit dem Knopf „Weiterarbeiten“, falls du noch in der Pause bist. Leer = aus."
             }
           },
           "break_check": {
@@ -302,11 +308,13 @@
             "data": {
               "stamp_location": "Arbeitsort mitsenden",
               "location_office": "Text für Büro",
-              "location_home_office": "Text für Homeoffice"
+              "location_home_office": "Text für Homeoffice",
+              "location_as_note": "Ort als Notiz senden"
             },
             "data_description": {
               "location_office": "Leer = „Büro“",
-              "location_home_office": "Leer = „Homeoffice“"
+              "location_home_office": "Leer = „Homeoffice“",
+              "location_as_note": "Für Konten, die den Ort eines Stempels nicht setzen dürfen (Fehler beim Stempeln): Der Ort wird stattdessen an die Notiz angehängt."
             }
           }
         }
@@ -316,19 +324,19 @@
   "selector": {
     "absence_states": {
       "options": {
-        "APPROVED": "Genehmigt",
-        "PRE_APPROVED": "Vorgenehmigt",
-        "REQUESTED": "Beantragt",
-        "REJECTED": "Abgelehnt",
-        "DRAFT": "Entwurf",
-        "REVOKED": "Widerrufen"
+        "approved": "Genehmigt",
+        "pre_approved": "Vorgenehmigt",
+        "requested": "Beantragt",
+        "rejected": "Abgelehnt",
+        "draft": "Entwurf",
+        "revoked": "Widerrufen"
       }
     },
     "stamp_type": {
       "options": {
-        "START_WORK": "Arbeit beginnen",
-        "START_BREAK": "Pause beginnen",
-        "CLOCK_OUT": "Ausstempeln"
+        "start_work": "Arbeit beginnen",
+        "start_break": "Pause beginnen",
+        "clock_out": "Ausstempeln"
       }
     },
     "weekday": {
