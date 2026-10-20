@@ -19,6 +19,7 @@ from .const import (
     ATTR_TIMESTAMP,
     DOMAIN,
     SERVICE_CREATE_STAMP,
+    SERVICE_SHOW_LIVE,
 )
 from .coordinator import CrewmeisterConfigEntry
 from .helpers import clean_note, note_with_location
@@ -38,6 +39,8 @@ SERVICE_SCHEMA_CREATE_STAMP = vol.Schema(
     }
 )
 
+SERVICE_SCHEMA_SHOW_LIVE = vol.Schema({vol.Optional(ATTR_CONFIG_ENTRY_ID): cv.string})
+
 
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
@@ -48,6 +51,14 @@ def async_setup_services(hass: HomeAssistant) -> None:
 
     hass.services.async_register(
         DOMAIN, SERVICE_CREATE_STAMP, async_create_stamp, schema=SERVICE_SCHEMA_CREATE_STAMP
+    )
+
+    async def async_show_live(call: ServiceCall) -> None:
+        entry = _resolve_entry(hass, call.data.get(ATTR_CONFIG_ENTRY_ID))
+        await entry.runtime_data.assistant.async_show_live()
+
+    hass.services.async_register(
+        DOMAIN, SERVICE_SHOW_LIVE, async_show_live, schema=SERVICE_SCHEMA_SHOW_LIVE
     )
 
 

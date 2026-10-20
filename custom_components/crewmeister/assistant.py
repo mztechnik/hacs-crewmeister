@@ -22,6 +22,7 @@ from homeassistant.core import (
     HomeAssistant,
     callback,
 )
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.event import (
     async_track_point_in_utc_time,
     async_track_state_change_event,
@@ -57,6 +58,7 @@ from .notifications import (
     Notifier,
     Segment,
     decode_action,
+    tag,
 )
 
 if TYPE_CHECKING:
@@ -75,6 +77,8 @@ LIVE_UPDATE_INTERVAL = timedelta(minutes=15)
 LIVE_RESTART_AFTER = timedelta(hours=7, minutes=30)
 LIVE_SEPARATOR = " · "
 EVENT_NOTIFICATION_ACTION = "mobile_app_notification_action"
+# Fired by the Android Companion App when the user swipes a notification away
+EVENT_NOTIFICATION_CLEARED = "mobile_app_notification_cleared"
 EVENT_TAG_SCANNED = "tag_scanned"
 # Backdated times offered in notifications must lie in this range around now
 MAX_ACTION_AGE = timedelta(days=3)
@@ -103,6 +107,9 @@ class AssistantState:
     last_clock_in_day: date | None = None
     snooze_until: datetime | None = None
     live_started_at: datetime | None = None
+    # Status (see _status_key) at which the user swiped the live display away;
+    # it stays hidden until the status changes or it is requested again
+    live_dismissed: str | None = None
     home_office: HomeOfficeState = field(default_factory=HomeOfficeState)
     # Where the user worked last ("office" / "home_office"), sent with stamps
     last_location: str | None = None
@@ -122,6 +129,7 @@ class AssistantState:
             else None,
             "snooze_until": _iso(self.snooze_until),
             "live_started_at": _iso(self.live_started_at),
+            "live_dismissed": self.live_dismissed,
             "home_office_since": _iso(self.home_office.session_since),
             "home_office_idle_since": _iso(self.home_office.idle_since),
             "last_location": self.last_location,
@@ -143,6 +151,7 @@ class AssistantState:
             last_clock_in_day=date.fromisoformat(last_day) if last_day else None,
             snooze_until=dt_util.parse_datetime(data.get("snooze_until") or ""),
             live_started_at=dt_util.parse_datetime(data.get("live_started_at") or ""),
+            live_dismissed=data.get("live_dismissed"),
             home_office=HomeOfficeState(
                 session_since=dt_util.parse_datetime(data.get("home_office_since") or ""),
                 idle_since=dt_util.parse_datetime(data.get("home_office_idle_since") or ""),
@@ -225,6 +234,10 @@ class CrewmeisterAssistant:
         if self._notifier.enabled:
             self._unsubs.append(
                 hass.bus.async_listen(EVENT_NOTIFICATION_ACTION, self._async_notification_action)
+            )
+        if self._notifier.enabled and cfg.notify_live:
+            self._unsubs.append(
+                hass.bus.async_listen(EVENT_NOTIFICATION_CLEARED, self._async_notification_cleared)
             )
 
         self._unsubs.append(async_track_time_interval(hass, self._async_tick, TICK_INTERVAL))
@@ -995,8 +1008,7 @@ class CrewmeisterAssistant:
         if data is None:
             return
         summary = data.today()
-        latest = summary.latest
-        key = (summary.status, _iso(latest.timestamp) if latest else "")
+        key = _status_key(summary)
         previous = self._last_status
         if key == previous:
             return
@@ -1043,12 +1055,19 @@ class CrewmeisterAssistant:
         now = dt_util.utcnow()
         state = self.state
         if summary.status == WorkStatus.CLOCKED_OUT or summary.status_since is None:
-            if state.live_started_at is not None:
+            if state.live_started_at is not None or state.live_dismissed is not None:
                 state.live_started_at = None
+                state.live_dismissed = None
                 self._save()
                 await self._notifier.async_clear(Kind.LIVE)
             self._live_updated_at = None
             return
+        if state.live_dismissed is not None:
+            if state.live_dismissed == _status_token(summary):
+                # Swiped away; do not bring it back with the periodic refresh
+                return
+            state.live_dismissed = None
+            self._save()
         if (
             not force
             and self._live_updated_at is not None
@@ -1122,6 +1141,41 @@ class CrewmeisterAssistant:
             if summary.status == WorkStatus.ON_BREAK
             else self.config.live_icon_work,
         )
+
+    async def _async_notification_cleared(self, event: Event) -> None:
+        """Remember that the user swiped the live display away (Android only)."""
+
+        if event.data.get("tag") != tag(self._entry.entry_id, Kind.LIVE):
+            return
+        if not self._event_allowed(event):
+            return
+        data = self._status.data
+        if data is None or self.state.live_started_at is None:
+            return
+        summary = data.today()
+        if summary.status == WorkStatus.CLOCKED_OUT:
+            return
+        self.state.live_dismissed = _status_token(summary)
+        self._save()
+
+    async def async_show_live(self) -> None:
+        """Show the live display again, e.g. after it was swiped away."""
+
+        if not self.config.notify_live or not self._notifier.enabled:
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="live_disabled")
+        summary = await self._async_fresh_summary()
+        if summary is None:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="status_unavailable"
+            )
+        if summary.status == WorkStatus.CLOCKED_OUT:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="live_clocked_out"
+            )
+        if self.state.live_dismissed is not None:
+            self.state.live_dismissed = None
+            self._save()
+        await self._async_update_live(summary, force=True)
 
     async def _async_check_break(self) -> None:
         """Warn if the finished shift had less break than required."""
@@ -1350,6 +1404,18 @@ def _in_window(now: time, start: time, end: time) -> bool:
     if start <= end:
         return start <= now <= end
     return now >= start or now <= end
+
+
+def _status_key(summary: DaySummary) -> tuple[WorkStatus, str]:
+    """Return a key that changes with every status change, also between equal states."""
+
+    latest = summary.latest
+    return (summary.status, _iso(latest.timestamp) if latest else "")
+
+
+def _status_token(summary: DaySummary) -> str:
+    status, latest = _status_key(summary)
+    return f"{status.value}|{latest}"
 
 
 def _iso(value: datetime | None) -> str | None:

@@ -467,6 +467,12 @@
       },
       "clock_out": {
         "name": "Clock out"
+      },
+      "next_step": {
+        "name": "Next step"
+      },
+      "show_live": {
+        "name": "Show live display"
       }
     },
     "calendar": {
@@ -510,6 +516,15 @@
     },
     "insecure_url": {
       "message": "The Crewmeister API URL does not use HTTPS. Please set up the integration again with an https:// address."
+    },
+    "live_disabled": {
+      "message": "The live display is not enabled. Turn it on in the assistant options and select a notification device."
+    },
+    "live_clocked_out": {
+      "message": "The live display is only shown while you are clocked in."
+    },
+    "status_unavailable": {
+      "message": "The Crewmeister status is currently unavailable."
     }
   },
   "services": {
@@ -540,6 +555,16 @@
         "config_entry_id": {
           "name": "Account",
           "description": "Crewmeister account to stamp for. Required if several accounts are configured."
+        }
+      }
+    },
+    "show_live": {
+      "name": "Show live display",
+      "description": "Shows the live display on the notification devices again, e.g. after it was swiped away.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Account",
+          "description": "Crewmeister account whose live display is shown. Required if several accounts are configured."
         }
       }
     }

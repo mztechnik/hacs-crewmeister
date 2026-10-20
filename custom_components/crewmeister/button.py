@@ -9,7 +9,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .api import CrewmeisterError, InvalidTransitionError, StampType, validate_transition
+from .api import (
+    CrewmeisterError,
+    InvalidTransitionError,
+    StampType,
+    WorkStatus,
+    validate_transition,
+)
 from .const import DOMAIN
 from .coordinator import CrewmeisterConfigEntry, CrewmeisterStatusCoordinator
 from .entity import CrewmeisterEntity
@@ -50,33 +56,31 @@ async def async_setup_entry(
 ) -> None:
     """Set up Crewmeister button entities."""
 
-    coordinator = entry.runtime_data.status_coordinator
-    async_add_entities(
+    runtime = entry.runtime_data
+    coordinator = runtime.status_coordinator
+    entities: list[ButtonEntity] = [
         CrewmeisterStampButton(coordinator, entry, description)
         for description in BUTTON_DESCRIPTIONS
-    )
+    ]
+    entities.append(CrewmeisterNextStepButton(coordinator, entry))
+    if runtime.config.notify_live and runtime.config.notify_targets:
+        entities.append(CrewmeisterShowLiveButton(coordinator, entry))
+    async_add_entities(entities)
 
 
-class CrewmeisterStampButton(CrewmeisterEntity[CrewmeisterStatusCoordinator], ButtonEntity):
-    """Button creating a stamp of a fixed type."""
-
-    entity_description: CrewmeisterButtonEntityDescription
+class _CrewmeisterButton(CrewmeisterEntity[CrewmeisterStatusCoordinator], ButtonEntity):
+    """Button of one Crewmeister user."""
 
     def __init__(
-        self,
-        coordinator: CrewmeisterStatusCoordinator,
-        entry: CrewmeisterConfigEntry,
-        description: CrewmeisterButtonEntityDescription,
+        self, coordinator: CrewmeisterStatusCoordinator, entry: CrewmeisterConfigEntry, key: str
     ) -> None:
-        super().__init__(coordinator, entry, description.key)
-        self.entity_description = description
+        super().__init__(coordinator, entry, key)
         self._runtime = entry.runtime_data
 
-    async def async_press(self) -> None:
-        stamp_type = self.entity_description.stamp_type
-
-        # The polled status may be outdated if the user stamped elsewhere
-        await self.coordinator.async_refresh()
+    async def _async_stamp(self, stamp_type: StampType, *, refreshed: bool = False) -> None:
+        if not refreshed:
+            # The polled status may be outdated if the user stamped elsewhere
+            await self.coordinator.async_refresh()
         if self.coordinator.last_update_success:
             try:
                 validate_transition(stamp_type, self.coordinator.data.status)
@@ -102,3 +106,74 @@ class CrewmeisterStampButton(CrewmeisterEntity[CrewmeisterStatusCoordinator], Bu
             ) from err
 
         await self.coordinator.async_request_refresh()
+
+
+class CrewmeisterStampButton(_CrewmeisterButton):
+    """Button creating a stamp of a fixed type."""
+
+    entity_description: CrewmeisterButtonEntityDescription
+
+    def __init__(
+        self,
+        coordinator: CrewmeisterStatusCoordinator,
+        entry: CrewmeisterConfigEntry,
+        description: CrewmeisterButtonEntityDescription,
+    ) -> None:
+        super().__init__(coordinator, entry, description.key)
+        self.entity_description = description
+
+    async def async_press(self) -> None:
+        await self._async_stamp(self.entity_description.stamp_type)
+
+
+# Stamp of the "next step" button and the icon announcing it
+NEXT_STEP: dict[WorkStatus, tuple[StampType, str]] = {
+    WorkStatus.CLOCKED_OUT: (StampType.START_WORK, "mdi:login"),
+    WorkStatus.CLOCKED_IN: (StampType.START_BREAK, "mdi:coffee"),
+    WorkStatus.ON_BREAK: (StampType.START_WORK, "mdi:briefcase-clock"),
+}
+
+
+class CrewmeisterNextStepButton(_CrewmeisterButton):
+    """Button clocking in, starting a break or resuming, depending on the status.
+
+    Meant for widgets with a single button; clocking out has its own button.
+    """
+
+    _attr_translation_key = "next_step"
+
+    def __init__(
+        self, coordinator: CrewmeisterStatusCoordinator, entry: CrewmeisterConfigEntry
+    ) -> None:
+        super().__init__(coordinator, entry, "next_step")
+
+    @property
+    def icon(self) -> str | None:
+        """Show what pressing the button does."""
+
+        if not self.coordinator.data:
+            return None
+        return NEXT_STEP[self.coordinator.data.status][1]
+
+    async def async_press(self) -> None:
+        # The step depends on the status, which must therefore be current
+        await self.coordinator.async_refresh()
+        if not self.coordinator.last_update_success or not self.coordinator.data:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="status_unavailable"
+            )
+        await self._async_stamp(NEXT_STEP[self.coordinator.data.status][0], refreshed=True)
+
+
+class CrewmeisterShowLiveButton(_CrewmeisterButton):
+    """Button showing the live display again, e.g. after it was swiped away."""
+
+    _attr_translation_key = "show_live"
+
+    def __init__(
+        self, coordinator: CrewmeisterStatusCoordinator, entry: CrewmeisterConfigEntry
+    ) -> None:
+        super().__init__(coordinator, entry, "show_live")
+
+    async def async_press(self) -> None:
+        await self._runtime.assistant.async_show_live()

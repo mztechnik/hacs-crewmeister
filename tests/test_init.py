@@ -35,6 +35,7 @@ CALENDAR = "calendar.max_muster_absences"
 CLOCK_IN = "button.max_muster_clock_in"
 START_BREAK = "button.max_muster_start_break"
 CLOCK_OUT = "button.max_muster_clock_out"
+NEXT_STEP = "button.max_muster_next_step"
 
 
 async def setup_entry(hass: HomeAssistant, entry: MockConfigEntry) -> None:
@@ -574,3 +575,57 @@ async def test_service_location_as_note(
     call = mock_client.async_create_stamp.await_args
     assert call.args == (StampType.START_WORK,)
     assert (call.kwargs["note"], call.kwargs["location"]) == ("Kunde", None)
+
+
+async def test_next_step_button(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup_entry(hass, mock_config_entry)
+    assert hass.states.get(NEXT_STEP).attributes["icon"] == "mdi:coffee"
+
+    for expected, icon in (
+        ("START_BREAK", "mdi:briefcase-clock"),
+        ("START_WORK", "mdi:coffee"),
+    ):
+        freezer.tick(timedelta(minutes=10))
+        await hass.services.async_call("button", "press", {"entity_id": NEXT_STEP}, blocking=True)
+        await hass.async_block_till_done()
+        assert backend.stamps[-1].stamp_type == expected
+        assert hass.states.get(NEXT_STEP).attributes["icon"] == icon
+
+    freezer.tick(timedelta(minutes=10))
+    await hass.services.async_call("button", "press", {"entity_id": CLOCK_OUT}, blocking=True)
+    await hass.async_block_till_done()
+    assert hass.states.get(NEXT_STEP).attributes["icon"] == "mdi:login"
+    freezer.tick(timedelta(minutes=10))
+    await hass.services.async_call("button", "press", {"entity_id": NEXT_STEP}, blocking=True)
+    assert backend.stamps[-1].stamp_type == "START_WORK"
+
+
+async def test_next_step_button_needs_status(
+    hass: HomeAssistant, mock_client: AsyncMock, mock_config_entry: MockConfigEntry
+) -> None:
+    await setup_entry(hass, mock_config_entry)
+    mock_client.async_get_recent_stamps.side_effect = CrewmeisterConnectionError("down")
+
+    with pytest.raises(HomeAssistantError) as err:
+        await hass.services.async_call("button", "press", {"entity_id": NEXT_STEP}, blocking=True)
+
+    assert err.value.translation_key == "status_unavailable"
+    mock_client.async_create_stamp.assert_not_awaited()
+
+
+async def test_show_live_needs_live_display(
+    hass: HomeAssistant, mock_client: AsyncMock, mock_config_entry: MockConfigEntry
+) -> None:
+    await setup_entry(hass, mock_config_entry)
+    assert hass.states.get("button.max_muster_show_live_display") is None
+
+    with pytest.raises(ServiceValidationError) as err:
+        await hass.services.async_call(DOMAIN, "show_live", {}, blocking=True)
+
+    assert err.value.translation_key == "live_disabled"

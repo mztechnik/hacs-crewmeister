@@ -6,7 +6,7 @@ Diese HACS-Integration bindet Crewmeister in Home Assistant ein. Nach der Einric
 
 ### Entitäten
 
-- **Buttons** zum Einstempeln, Pausieren und Ausstempeln direkt aus Home Assistant.
+- **Buttons** zum Einstempeln, Pausieren und Ausstempeln direkt aus Home Assistant. Dazu **Nächster Schritt**: stempelt je nach Status ein, startet die Pause oder arbeitet weiter, ideal für ein einzelnes Widget (siehe [Widgets](#widgets-android--ios)). Bei eingeschalteter Live-Anzeige gibt es außerdem **Live-Anzeige anzeigen**.
 - **Sensoren** für den aktuellen Status, die letzte Stempelung sowie **Arbeitszeit heute** und **Pausenzeit heute** (zählen live mit; Attribute: Arbeitsbeginn, Arbeit seit letzter Pause, vorgeschriebene und fehlende Pause).
 - **Binärsensoren** „Eingestempelt“, „Pause“, „Arbeitstag“ (Wochentage, optionaler Workday-Sensor für Feiertage, ganztägige Abwesenheit) und „Urlaub / Abwesenheit“.
 - **Kalender** mit den eigenen Abwesenheiten (z. B. Urlaub oder Krankheit), inklusive Unterstützung für Teil-Tag-Abwesenheiten.
@@ -44,6 +44,7 @@ Hinweise zur Live-Anzeige:
 
 - Voraussetzungen laut [Companion-App-Doku](https://companion.home-assistant.io/docs/notifications/live-activities): Home Assistant 2026.7, iOS 17.2 (dort noch als Beta gekennzeichnet) bzw. eine aktuelle Android-App; Statusleisten-Chip und Always-on-Display ab Android 16.
 - Die Uhr läuft auf dem Handy selbst; Home Assistant aktualisiert die Anzeige bei jedem Statuswechsel und sonst alle 15 Minuten.
+- **Weggewischt?** Auf Android lässt sich die Live-Anzeige wegwischen. Die Integration merkt das und schickt sie nicht alle 15 Minuten neu, sondern erst beim nächsten Statuswechsel (Pause, Weiterarbeiten, nächster Arbeitstag). Sofort zurück holt sie der Button **Live-Anzeige anzeigen** oder der Dienst `crewmeister.show_live`, z. B. als Widget oder Schnellkachel. Mit mehreren Geräten gilt das Wegwischen für alle, weil die App nicht mitsendet, von welchem Gerät es kam.
 - Auf iOS ersetzt die laufende Uhr den Text: Dort sind Uhr, Fortschritt in Prozent und Balken zu sehen, der voraussichtliche Feierabend nur auf Android bzw. im Sensor „Arbeitszeit heute“.
 - iOS beendet Live Activities nach spätestens 8 Stunden. Die Integration startet die Anzeige deshalb nach 7,5 Stunden neu.
 - Für iOS-Updates unterwegs braucht die App eine Verbindung zu Home Assistant (Fernzugriff).
@@ -54,10 +55,50 @@ Hinweise zur Live-Anzeige:
 ### Dienste & Optionen
 
 - **Dienst** `crewmeister.create_stamp`, um Stempelungen inkl. optionaler Notiz, Ort oder Zeitpunkt automatisiert zu erstellen.
+- **Dienst** `crewmeister.show_live`, um die Live-Anzeige wieder anzuzeigen.
 - **Integration-Optionen** für Abfrageintervall, Filterung nach Abwesenheitsstatus, Standardnotiz sowie `time_account_id` für Stempelungen.
 - **Mehrbenutzer-Support**: Die Crewmeister-Benutzer-ID dient als eindeutige ID, sodass mehrere Konten parallel eingerichtet werden können.
 - **Diagnose-Download** (Zugangsdaten werden geschwärzt) für Fehlerberichte.
 
+
+### Widgets (Android & iOS)
+
+Eine eigene App ist nicht nötig: Die Companion App bringt Widgets mit, die direkt die Entitäten der Integration nutzen. Ein Widget kann dort allerdings entweder anzeigen oder einen Knopf haben; man kombiniert also eine Anzeige mit ein bis drei Knöpfen. Die Entitäts-IDs stehen unter *Einstellungen › Geräte & Dienste › Crewmeister › Gerät*; in den Beispielen heißt das Gerät `max_muster`. Wurde Home Assistant auf Deutsch eingerichtet, sind die IDs deutsch, z. B. `sensor.max_muster_arbeitszeit_heute` oder `button.max_muster_nachster_schritt`.
+
+**Android** (Widget lange antippen bzw. Startbildschirm › Widgets › Home Assistant):
+
+| Widget | Einstellung |
+|---|---|
+| **Vorlage** (Template), z. B. 3×1 | Status, Arbeitszeit und Feierabend, Vorlage unten. Antippen aktualisiert. |
+| **Knopf** (Button) | Aktion `button.press`, Entität `button.max_muster_next_step`. Für einen Knopf je Aktion stattdessen *Einstempeln*, *Pause*, *Ausstempeln*. Optional „Authentifizierung erforderlich“. |
+| **Knopf** | Aktion `crewmeister.show_live`, um die weggewischte Live-Anzeige zurückzuholen. |
+| **Entität** (Entity State) | Alternativ zur Vorlage: `sensor.max_muster_status` oder Arbeitszeit heute, ohne eigene Formatierung. |
+
+Die Schnellkacheln (*Einstellungen › Companion App › Kacheln verwalten*) können ebenfalls eine Button-Entität drücken, z. B. *Nächster Schritt* direkt aus der Benachrichtigungsleiste.
+
+Vorlage für das Android-Widget (einfaches HTML wie `<b>`, `<br>` und `<font color>` wird dargestellt):
+
+```jinja
+{% set s = 'sensor.max_muster_status' %}
+{% set w = 'sensor.max_muster_work_time_today' %}
+{% set status = states(s) %}
+{% set min = states(w) | float(0) | int %}
+{% set ende = state_attr(w, 'expected_end') %}
+{% if status == 'clocked_in' %}<font color="#03A9F4"><b>🔵 Bei der Arbeit</b></font>
+{% elif status == 'on_break' %}<font color="#F9A825"><b>🟡 Pause</b></font>
+{% else %}<b>⚪ Ausgestempelt</b>{% endif %}<br>
+Arbeitszeit {{ min // 60 }}:{{ '%02d' % (min % 60) }} h
+{% if ende and status != 'clocked_out' %} · Feierabend ca. {{ as_timestamp(ende) | timestamp_custom('%H:%M') }}{% endif %}
+```
+
+Die Vorlage wird von der App aktualisiert, wenn sie mit Home Assistant verbunden ist; die Arbeitszeit springt dabei minutenweise, nicht sekundengenau wie die Uhr der Live-Anzeige.
+
+**iOS** (Companion App 2024.x oder neuer):
+
+- **Eigenes Widget**: in der App unter *Einstellungen › Widgets* ein Widget anlegen und `sensor.max_muster_status`, Arbeitszeit heute sowie die Buttons *Nächster Schritt* und *Ausstempeln* (oder *Einstempeln*, *Pause*, *Ausstempeln*) hinzufügen. Ab iOS 17 lösen die Buttons direkt im Widget aus, auf Wunsch mit Bestätigung. Danach auf dem Home-Bildschirm das Widget *Home Assistant › Eigene* wählen.
+- **Steuerelemente** (iOS 18, Kontrollzentrum und Sperrbildschirm): *Button* mit `button.max_muster_next_step` oder `…_clock_out`.
+- **Sperrbildschirm**: *Details* mit einer kurzen Vorlage (z. B. Status und Arbeitszeit) oder *Messanzeige* mit der Arbeitszeit.
+- Den Status mit laufender Uhr zeigt auf iOS die Live-Anzeige (Live Activity).
 
 ### 🚀 Über HACS installieren
 

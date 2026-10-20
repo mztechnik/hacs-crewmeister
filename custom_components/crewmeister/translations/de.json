@@ -467,6 +467,12 @@
       },
       "clock_out": {
         "name": "Ausstempeln"
+      },
+      "next_step": {
+        "name": "Nächster Schritt"
+      },
+      "show_live": {
+        "name": "Live-Anzeige anzeigen"
       }
     },
     "calendar": {
@@ -510,6 +516,15 @@
     },
     "insecure_url": {
       "message": "Die Crewmeister-API-URL verwendet kein HTTPS. Bitte die Integration mit einer https://-Adresse neu einrichten."
+    },
+    "live_disabled": {
+      "message": "Die Live-Anzeige ist nicht eingeschaltet. Schalte sie in den Assistent-Optionen ein und wähle ein Gerät für Benachrichtigungen."
+    },
+    "live_clocked_out": {
+      "message": "Die Live-Anzeige erscheint nur, solange du eingestempelt bist."
+    },
+    "status_unavailable": {
+      "message": "Der Crewmeister-Status ist gerade nicht verfügbar."
     }
   },
   "services": {
@@ -540,6 +555,16 @@
         "config_entry_id": {
           "name": "Konto",
           "description": "Crewmeister-Konto, für das gestempelt wird. Pflicht, wenn mehrere Konten eingerichtet sind."
+        }
+      }
+    },
+    "show_live": {
+      "name": "Live-Anzeige anzeigen",
+      "description": "Zeigt die Live-Anzeige auf den Benachrichtigungsgeräten wieder an, z. B. nachdem sie weggewischt wurde.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Konto",
+          "description": "Crewmeister-Konto, dessen Live-Anzeige erscheinen soll. Nötig, wenn mehrere Konten eingerichtet sind."
         }
       }
     }

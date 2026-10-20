@@ -1,5 +1,13 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Neu
+- Wird die Live-Anzeige auf Android weggewischt, schickt die Integration sie nicht mehr nach spätestens 15 Minuten ungefragt zurück, sondern erst beim nächsten Statuswechsel. Das gilt auch über einen Neustart von Home Assistant hinweg.
+- Button **Live-Anzeige anzeigen** und Dienst `crewmeister.show_live`, um die Live-Anzeige sofort wieder anzuzeigen.
+- Button **Nächster Schritt**: stempelt je nach Status ein, startet die Pause oder arbeitet weiter; das Symbol zeigt, was als Nächstes passiert. Gedacht für Widgets mit einem einzigen Knopf.
+- README: Anleitung für Widgets der Companion App auf Android und iOS, mit Vorlage für das Android-Template-Widget.
+
 ## 0.4.1 – 2026-10-20
 
 Gleicher Stand wie das Release 0.4.0, nur mit neuer Versionsnummer. Zwischen den beiden Merges vom 20.10. konnte über HACS ein Zwischenstand von `main` installiert werden, der ebenfalls „0.4.0“ hieß, aber noch ohne Knöpfe und Farben der Live-Anzeige, „Ort als Notiz“, einstellbare Symbole und die Erinnerung ans Weiterarbeiten war. Mit 0.4.1 ist eindeutig, welcher Stand installiert ist.

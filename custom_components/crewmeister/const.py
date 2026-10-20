@@ -119,6 +119,7 @@ ABSENCE_STATES: Final = ["APPROVED", "PRE_APPROVED", "REQUESTED", "REJECTED", "D
 DEFAULT_ABSENCE_STATES: Final = ["APPROVED", "PRE_APPROVED"]
 
 SERVICE_CREATE_STAMP: Final = "create_stamp"
+SERVICE_SHOW_LIVE: Final = "show_live"
 ATTR_CONFIG_ENTRY_ID: Final = "config_entry_id"
 ATTR_NOTE: Final = "note"
 ATTR_LOCATION: Final = "location"

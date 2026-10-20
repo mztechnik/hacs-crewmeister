@@ -9,6 +9,12 @@
       },
       "clock_out": {
         "default": "mdi:logout"
+      },
+      "next_step": {
+        "default": "mdi:gesture-tap-button"
+      },
+      "show_live": {
+        "default": "mdi:cellphone-text"
       }
     },
     "sensor": {
@@ -78,6 +84,9 @@
   "services": {
     "create_stamp": {
       "service": "mdi:clock-plus-outline"
+    },
+    "show_live": {
+      "service": "mdi:cellphone-text"
     }
   }
 }

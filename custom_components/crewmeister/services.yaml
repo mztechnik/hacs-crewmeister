@@ -28,3 +28,10 @@ create_stamp:
       selector:
         config_entry:
           integration: crewmeister
+
+show_live:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: crewmeister

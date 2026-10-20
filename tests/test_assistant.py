@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock
 
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.core import Context, HomeAssistant, ServiceCall
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util import dt as dt_util
 import pytest
 from pytest_homeassistant_custom_component.common import (
@@ -1203,3 +1204,99 @@ async def test_no_resume_reminder_while_working(
     await advance(hass, freezer, timedelta(minutes=10))
 
     assert "Back to work?" not in titles(notifications)
+
+
+async def test_live_display_swiped_away(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup(hass, mock_config_entry, {"notify_targets": [PHONE], "notify_live": True})
+    tag = f"crewmeister_{mock_config_entry.entry_id}_live"
+    assert len(live_calls(notifications)) == 1
+
+    # Other notifications and other entries do not count
+    for other in ("crewmeister_other_live", f"crewmeister_{mock_config_entry.entry_id}_status"):
+        hass.bus.async_fire("mobile_app_notification_cleared", {"tag": other})
+    await hass.async_block_till_done()
+    await advance(hass, freezer, timedelta(minutes=15))
+    assert len(live_calls(notifications)) == 2
+
+    hass.bus.async_fire("mobile_app_notification_cleared", {"tag": tag})
+    await hass.async_block_till_done()
+
+    # No periodic refresh, not even after a restart
+    await advance(hass, freezer, timedelta(minutes=30))
+    await hass.config_entries.async_reload(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert len(live_calls(notifications)) == 2
+
+    # The button brings it back immediately
+    await hass.services.async_call(
+        "button", "press", {"entity_id": "button.max_muster_show_live_display"}, blocking=True
+    )
+    assert len(live_calls(notifications)) == 3
+    await advance(hass, freezer, timedelta(minutes=15))
+    assert len(live_calls(notifications)) == 4
+
+    # Swiped away again: the next status change shows it
+    hass.bus.async_fire("mobile_app_notification_cleared", {"tag": tag})
+    await hass.async_block_till_done()
+    await advance(hass, freezer, timedelta(minutes=15))
+    assert len(live_calls(notifications)) == 4
+    await hass.services.async_call(
+        "button", "press", {"entity_id": "button.max_muster_start_break"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert live_calls(notifications)[-1].data["data"]["critical_text"] == "Break"
+    await advance(hass, freezer, timedelta(minutes=15))
+    assert len(live_calls(notifications)) == 6
+
+
+async def test_show_live_service(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+) -> None:
+    await setup(hass, mock_config_entry, {"notify_targets": [PHONE], "notify_live": True})
+
+    await hass.services.async_call(
+        "crewmeister",
+        "show_live",
+        {"config_entry_id": mock_config_entry.entry_id},
+        blocking=True,
+    )
+    assert len(live_calls(notifications)) == 2
+
+    await press(hass, f"crewmeister:{mock_config_entry.entry_id}:CLOCK_OUT")
+    with pytest.raises(ServiceValidationError) as err:
+        await hass.services.async_call("crewmeister", "show_live", {}, blocking=True)
+    assert err.value.translation_key == "live_clocked_out"
+    assert len(live_calls(notifications)) == 2
+
+
+async def test_swipe_from_other_user_is_ignored(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    add_phone_registration(hass, "owner")
+    await setup(hass, mock_config_entry, {"notify_targets": [PHONE], "notify_live": True})
+
+    hass.bus.async_fire(
+        "mobile_app_notification_cleared",
+        {"tag": f"crewmeister_{mock_config_entry.entry_id}_live"},
+        context=Context(user_id="intruder"),
+    )
+    await hass.async_block_till_done()
+    await advance(hass, freezer, timedelta(minutes=15))
+
+    assert len(live_calls(notifications)) == 2
