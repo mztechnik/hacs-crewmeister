@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 – unveröffentlicht
+## 0.4.0 – 2026-10-20
 
 ### Neu
 - Sensoren **Arbeitszeit heute** und **Pausenzeit heute** (zählen minütlich mit, ohne zusätzliche API-Abfragen), Binärsensoren **Pause**, **Arbeitstag** und **Urlaub / Abwesenheit**.
