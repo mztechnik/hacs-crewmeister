@@ -25,7 +25,8 @@ from .helpers import clean_note
 
 SERVICE_SCHEMA_CREATE_STAMP = vol.Schema(
     {
-        vol.Required(ATTR_STAMP_TYPE): vol.All(cv.string, vol.Coerce(StampType)),
+        # The selector sends lowercase values; uppercase keeps older automations working
+        vol.Required(ATTR_STAMP_TYPE): vol.All(cv.string, vol.Upper, vol.Coerce(StampType)),
         vol.Optional(ATTR_TIMESTAMP): cv.datetime,
         vol.Optional(ATTR_NOTE): vol.Any(cv.string, None),
         vol.Optional(ATTR_LOCATION): vol.Any(cv.string, None),

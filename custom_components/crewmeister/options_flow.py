@@ -298,7 +298,7 @@ ADVANCED_SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_ABSENCE_STATES): SelectSelector(
             SelectSelectorConfig(
-                options=ABSENCE_STATES,
+                options=[state.lower() for state in ABSENCE_STATES],
                 multiple=True,
                 mode=SelectSelectorMode.LIST,
                 translation_key=CONF_ABSENCE_STATES,
@@ -448,7 +448,7 @@ class CrewmeisterOptionsFlow(OptionsFlowWithReload):
         current = self.config_entry.options
         suggested = {
             CONF_UPDATE_INTERVAL: update_interval_seconds(current),
-            CONF_ABSENCE_STATES: absence_states(current),
+            CONF_ABSENCE_STATES: [state.lower() for state in absence_states(current)],
             CONF_STAMP_NOTE: clean_note(current.get(CONF_STAMP_NOTE)),
             CONF_STAMP_TIME_ACCOUNT_ID: positive_int(current.get(CONF_STAMP_TIME_ACCOUNT_ID)),
             CONF_STAMP_LOCATION: bool(current.get(CONF_STAMP_LOCATION, False)),

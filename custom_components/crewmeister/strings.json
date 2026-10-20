@@ -316,19 +316,19 @@
   "selector": {
     "absence_states": {
       "options": {
-        "APPROVED": "Approved",
-        "PRE_APPROVED": "Pre-approved",
-        "REQUESTED": "Requested",
-        "REJECTED": "Rejected",
-        "DRAFT": "Draft",
-        "REVOKED": "Revoked"
+        "approved": "Approved",
+        "pre_approved": "Pre-approved",
+        "requested": "Requested",
+        "rejected": "Rejected",
+        "draft": "Draft",
+        "revoked": "Revoked"
       }
     },
     "stamp_type": {
       "options": {
-        "START_WORK": "Start work",
-        "START_BREAK": "Start break",
-        "CLOCK_OUT": "Clock out"
+        "start_work": "Start work",
+        "start_break": "Start break",
+        "clock_out": "Clock out"
       }
     },
     "weekday": {

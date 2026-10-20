@@ -316,19 +316,19 @@
   "selector": {
     "absence_states": {
       "options": {
-        "APPROVED": "Genehmigt",
-        "PRE_APPROVED": "Vorgenehmigt",
-        "REQUESTED": "Beantragt",
-        "REJECTED": "Abgelehnt",
-        "DRAFT": "Entwurf",
-        "REVOKED": "Widerrufen"
+        "approved": "Genehmigt",
+        "pre_approved": "Vorgenehmigt",
+        "requested": "Beantragt",
+        "rejected": "Abgelehnt",
+        "draft": "Entwurf",
+        "revoked": "Widerrufen"
       }
     },
     "stamp_type": {
       "options": {
-        "START_WORK": "Arbeit beginnen",
-        "START_BREAK": "Pause beginnen",
-        "CLOCK_OUT": "Ausstempeln"
+        "start_work": "Arbeit beginnen",
+        "start_break": "Pause beginnen",
+        "clock_out": "Ausstempeln"
       }
     },
     "weekday": {

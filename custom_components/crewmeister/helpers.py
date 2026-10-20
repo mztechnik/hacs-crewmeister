@@ -54,7 +54,8 @@ def absence_states(options: dict[str, Any]) -> list[str]:
     value = options.get(CONF_ABSENCE_STATES)
     if isinstance(value, str):
         value = [value]
-    states = sorted({s for s in value or () if s in ABSENCE_STATES})
+    # Selectors use lowercase values (translation keys), the API uppercase ones
+    states = sorted({str(s).upper() for s in value or ()} & set(ABSENCE_STATES))
     return states or list(DEFAULT_ABSENCE_STATES)
 
 

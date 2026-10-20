@@ -262,7 +262,7 @@ async def test_options_advanced(
         result["flow_id"],
         {
             "update_interval": 900.0,
-            "absence_states": ["REQUESTED", "APPROVED"],
+            "absence_states": ["requested", "approved"],
             "stamp_note": "  Büro  ",
             "stamp_time_account_id": 5.0,
             "location": {"stamp_location": True, "location_home_office": " Mobil "},
