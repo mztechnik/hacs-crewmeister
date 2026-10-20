@@ -16,6 +16,7 @@ from homeassistant.helpers.selector import (
     BooleanSelector,
     EntitySelector,
     EntitySelectorConfig,
+    IconSelector,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -57,6 +58,8 @@ from .const import (
     CONF_HO_SHORT_BREAK,
     CONF_HO_WINDOW_END,
     CONF_HO_WINDOW_START,
+    CONF_LIVE_ICON_BREAK,
+    CONF_LIVE_ICON_WORK,
     CONF_LOCATION_AS_NOTE,
     CONF_LOCATION_HOME_OFFICE,
     CONF_LOCATION_OFFICE,
@@ -412,6 +415,8 @@ class CrewmeisterOptionsFlow(OptionsFlowWithReload):
                 ),
                 vol.Required(CONF_NOTIFY_CONFIRMATIONS): BooleanSelector(),
                 vol.Required(CONF_NOTIFY_LIVE): BooleanSelector(),
+                vol.Optional(CONF_LIVE_ICON_WORK): IconSelector(),
+                vol.Optional(CONF_LIVE_ICON_BREAK): IconSelector(),
                 vol.Required(CONF_NOTIFY_STATUS): BooleanSelector(),
             }
         )

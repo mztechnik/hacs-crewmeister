@@ -35,6 +35,8 @@ from ..const import (
     CONF_HO_SHORT_BREAK,
     CONF_HO_WINDOW_END,
     CONF_HO_WINDOW_START,
+    CONF_LIVE_ICON_BREAK,
+    CONF_LIVE_ICON_WORK,
     CONF_LOCATION_AS_NOTE,
     CONF_LOCATION_HOME_OFFICE,
     CONF_LOCATION_OFFICE,
@@ -61,6 +63,8 @@ from ..const import (
     CONF_WORK_ZONES,
     CONF_WORKDAY_ENTITY,
     CONF_WORKDAYS,
+    DEFAULT_LIVE_ICON_BREAK,
+    DEFAULT_LIVE_ICON_WORK,
 )
 from .workday import DEFAULT_WORKDAYS, WEEKDAYS
 
@@ -81,6 +85,8 @@ DEFAULTS: dict[str, Any] = {
     CONF_NOTIFY_CONFIRMATIONS: True,
     CONF_NOTIFY_STATUS: False,
     CONF_NOTIFY_LIVE: False,
+    CONF_LIVE_ICON_WORK: DEFAULT_LIVE_ICON_WORK,
+    CONF_LIVE_ICON_BREAK: DEFAULT_LIVE_ICON_BREAK,
     CONF_WORK_ZONES: [],
     CONF_WIFI_SSIDS: [],
     CONF_PRESENCE_ENTITIES: [],
@@ -135,6 +141,8 @@ class AssistantConfig:
     notify_confirmations: bool = True
     notify_status: bool = False
     notify_live: bool = False
+    live_icon_work: str = DEFAULT_LIVE_ICON_WORK
+    live_icon_break: str = DEFAULT_LIVE_ICON_BREAK
 
     person: str | None = None
     work_zones: list[str] = field(default_factory=list)
@@ -247,6 +255,8 @@ class AssistantConfig:
             notify_confirmations=bool(get(CONF_NOTIFY_CONFIRMATIONS)),
             notify_status=bool(get(CONF_NOTIFY_STATUS)),
             notify_live=bool(get(CONF_NOTIFY_LIVE)),
+            live_icon_work=_text(options.get(CONF_LIVE_ICON_WORK)) or DEFAULT_LIVE_ICON_WORK,
+            live_icon_break=_text(options.get(CONF_LIVE_ICON_BREAK)) or DEFAULT_LIVE_ICON_BREAK,
             person=_entity(options.get(CONF_PERSON)),
             work_zones=_str_list(get(CONF_WORK_ZONES)),
             wifi_sensor=_entity(options.get(CONF_WIFI_SENSOR)),

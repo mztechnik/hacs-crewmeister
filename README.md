@@ -49,7 +49,7 @@ Hinweise zur Live-Anzeige:
 - Für iOS-Updates unterwegs braucht die App eine Verbindung zu Home Assistant (Fernzugriff).
 - Arbeit und Pause sind farblich getrennt: Arbeit blau, Pause gelb. Android färbt Symbol, Uhr und Balken immer in einer Farbe, die mit dem Status wechselt; im Text sind Arbeits- und Pausenzeit zusätzlich farbig. Auf iOS wechselt die Hintergrundfarbe der Karte.
 - Auf Android hat die Live-Anzeige Knöpfe: *Pause* und *Ausstempeln* bei der Arbeit, *Weiterarbeiten* und *Ausstempeln* in der Pause. iOS erlaubt in Live Activities keine Knöpfe; dort laufen Pause und Ausstempeln weiter über die normalen Benachrichtigungen.
-- Animierte Bilder (GIF) unterstützt die Live-Anzeige auf keiner Plattform, nur Symbole.
+- Animierte Bilder (GIF) unterstützt die Live-Anzeige auf keiner Plattform, nur Symbole. Die Symbole für Arbeit und Pause sind unter *Benachrichtigungen* einstellbar, z. B. `mdi:account-hard-hat` (Bauarbeiter) und `mdi:pretzel` (Brezel).
 
 ### Dienste & Optionen
 

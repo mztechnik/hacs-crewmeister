@@ -1125,3 +1125,33 @@ async def test_live_display_colors_text_on_android(
         '<font color="#03A9F4">🔵 Working since 08:00</font> · '
         '<font color="#F9A825">🟡 Break 0:00 h</font> · done around 16:30'
     )
+
+
+async def test_live_display_custom_icons(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            "notify_targets": [PHONE],
+            "notify_live": True,
+            "live_icon_work": "mdi:account-hard-hat",
+            "live_icon_break": "mdi:pretzel",
+        },
+    )
+    assert live_calls(notifications)[-1].data["data"]["notification_icon"] == (
+        "mdi:account-hard-hat"
+    )
+
+    await advance(hass, freezer, timedelta(minutes=1))
+    await hass.services.async_call(
+        "button", "press", {"entity_id": "button.max_muster_start_break"}, blocking=True
+    )
+    await hass.async_block_till_done()
+    assert live_calls(notifications)[-1].data["data"]["notification_icon"] == "mdi:pretzel"

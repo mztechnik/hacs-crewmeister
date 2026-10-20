@@ -1099,6 +1099,9 @@ class CrewmeisterAssistant:
             progress=progress,
             on_break=summary.status == WorkStatus.ON_BREAK,
             buttons=buttons,
+            icon=self.config.live_icon_break
+            if summary.status == WorkStatus.ON_BREAK
+            else self.config.live_icon_work,
         )
 
     async def _async_check_break(self) -> None:

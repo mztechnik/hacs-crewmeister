@@ -182,6 +182,7 @@ def build_live_payload(
     on_break: bool,
     buttons: list[Button] | None = None,
     android: bool = False,
+    icon: str | None = None,
 ) -> dict[str, Any]:
     """Return a Live Activity (iOS) / Live Update (Android) payload.
 
@@ -199,7 +200,7 @@ def build_live_payload(
         "critical_text": critical_text,
         "chronometer": True,
         "when": int(timer_start.timestamp()),
-        "notification_icon": "mdi:coffee" if on_break else "mdi:briefcase-clock",
+        "notification_icon": icon or ("mdi:coffee" if on_break else "mdi:briefcase-clock"),
         "notification_icon_color": colors.accent,
         "color": colors.accent,
         "progress_bar_color": colors.accent,
@@ -273,6 +274,7 @@ class Notifier:
         progress: tuple[int, int] | None,
         on_break: bool,
         buttons: list[Button] | None = None,
+        icon: str | None = None,
     ) -> None:
         """Start or update the live display; updates with the same tag replace it."""
 
@@ -290,6 +292,7 @@ class Notifier:
                     on_break=on_break,
                     buttons=buttons,
                     android=target in android,
+                    icon=icon,
                 ),
             )
 

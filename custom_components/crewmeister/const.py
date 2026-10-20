@@ -42,6 +42,10 @@ CONF_NOTIFY_TARGETS: Final = "notify_targets"
 CONF_NOTIFY_CONFIRMATIONS: Final = "notify_confirmations"
 CONF_NOTIFY_STATUS: Final = "notify_status"
 CONF_NOTIFY_LIVE: Final = "notify_live"
+CONF_LIVE_ICON_WORK: Final = "live_icon_work"
+CONF_LIVE_ICON_BREAK: Final = "live_icon_break"
+DEFAULT_LIVE_ICON_WORK: Final = "mdi:briefcase-clock"
+DEFAULT_LIVE_ICON_BREAK: Final = "mdi:coffee"
 
 # Options: automatic stamping
 CONF_PERSON: Final = "person"
