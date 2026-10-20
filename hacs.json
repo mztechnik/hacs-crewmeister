@@ -3,6 +3,6 @@
   "content_in_root": false,
   "filename": "README.md",
   "render_readme": true,
-  "domains": ["crewmeister"],
+  "homeassistant": "2026.2.0",
   "country": ["DE"]
 }

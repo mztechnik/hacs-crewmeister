@@ -1,5 +1,4 @@
 {
-  "title": "Crewmeister",
   "config": {
     "step": {
       "user": {
@@ -8,43 +7,447 @@
           "base_url": "API base URL",
           "username": "Email address",
           "password": "Password"
+        },
+        "data_description": {
+          "base_url": "Only change this if Crewmeister told you to use a different API endpoint."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Crewmeister",
+        "description": "The password for {username} is no longer valid. Please enter the current password.",
+        "data": {
+          "password": "Password"
         }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to the Crewmeister API.",
+      "cannot_connect": "Failed to connect to the Crewmeister API.",
       "invalid_auth": "Invalid username or password.",
-      "no_identity": "Could not determine your Crewmeister user profile.",
-      "unknown": "Unexpected error. Please try again."
+      "no_identity": "Your Crewmeister profile could not be determined.",
+      "unknown": "Unexpected error. Please try again.",
+      "insecure_url": "The API URL must start with https:// so that the password is sent encrypted."
     },
     "abort": {
-      "reauth_successful": "Re-authentication successful."
+      "already_configured": "This Crewmeister account is already configured.",
+      "reauth_successful": "Re-authentication was successful.",
+      "wrong_account": "The credentials belong to a different Crewmeister account."
     }
   },
   "options": {
     "step": {
       "init": {
-        "data": {
-          "update_interval": "Status update interval (seconds, min. 300)",
-          "absence_states": "Absence states to include",
-          "stamp_note": "Default note for created stamps",
-          "stamp_time_account_id": "Default time account ID"
+        "title": "Crewmeister settings",
+        "description": "All features are optional. Each area is saved as soon as you submit it.",
+        "menu_options": {
+          "schedule": "Working time",
+          "notifications": "Notifications",
+          "auto_stamp": "Office",
+          "home_office": "Home office",
+          "reminders": "Reminders",
+          "breaks": "Breaks",
+          "advanced": "Advanced"
+        },
+        "menu_option_descriptions": {
+          "schedule": "Working days, target working time, public holidays",
+          "notifications": "Choose your phone, live display, confirmations",
+          "auto_stamp": "Automatic stamping via zones, Wi-Fi, NFC",
+          "home_office": "Automatic stamping via power plug and presence sensor",
+          "reminders": "End of day, forgotten clock out",
+          "breaks": "Break reminder, lunch break, break check",
+          "advanced": "Polling interval, calendar, stamp defaults"
         }
+      },
+      "schedule": {
+        "title": "Working time",
+        "description": "Basis for the end of day reminder, the live display and automatic clock in.",
+        "data": {
+          "workdays": "Working days",
+          "daily_hours": "Daily target working time",
+          "workday_entity": "Workday sensor"
+        },
+        "data_description": {
+          "workdays": "No automatic clock in on other days.",
+          "daily_hours": "Target working time on working days without an own value below. Used for the end of day reminder, the live display and the forgotten clock out offer.",
+          "workday_entity": "Optional, e.g. from the Workday integration to skip public holidays."
+        },
+        "sections": {
+          "weekday_hours": {
+            "name": "Different target time per weekday",
+            "description": "Empty = daily target time, 0 = no target on that day.",
+            "data": {
+              "hours_mon": "Monday",
+              "hours_tue": "Tuesday",
+              "hours_wed": "Wednesday",
+              "hours_thu": "Thursday",
+              "hours_fri": "Friday",
+              "hours_sat": "Saturday",
+              "hours_sun": "Sunday"
+            }
+          }
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Questions, reminders and the live display are delivered via the Home Assistant Companion App (Android and iOS).",
+        "data": {
+          "notify_targets": "Devices",
+          "notify_confirmations": "Confirm stamps",
+          "notify_live": "Live display (iOS Live Activity / Android Live Update)",
+          "notify_status": "Ongoing status notification (Android)"
+        },
+        "data_description": {
+          "notify_targets": "Home Assistant Companion App devices (notify.mobile_app_…). Without a device no notifications are sent.",
+          "notify_confirmations": "Send a short confirmation after each stamp made by the assistant.",
+          "notify_live": "Shows work time with a running timer, progress towards your target time and the expected end of day on the lock screen. Requires Home Assistant 2026.7, iOS 17.2 or the current Android app. Replaces the ongoing status notification.",
+          "notify_status": "Shows a permanent notification with a running timer and buttons while you work. Not used if the live display is on."
+        }
+      },
+      "auto_stamp": {
+        "title": "Office",
+        "description": "{notify_hint}Choose how being at work is detected and what happens when you arrive and leave.",
+        "sections": {
+          "detection": {
+            "name": "Detection",
+            "description": "One matching source is enough.",
+            "data": {
+              "person": "Person",
+              "work_zones": "Work zones",
+              "wifi_sensor": "Wi-Fi sensor",
+              "wifi_ssids": "Work Wi-Fi names (SSID)",
+              "presence_entities": "Other presence entities"
+            },
+            "data_description": {
+              "person": "Home Assistant person of this Crewmeister user.",
+              "work_zones": "Being in one of these zones counts as being at work.",
+              "wifi_sensor": "Wi-Fi connection sensor of the Companion App (more reliable than GPS).",
+              "wifi_ssids": "Being connected to one of these networks counts as being at work.",
+              "presence_entities": "Binary sensors or input booleans that are on while you are at work."
+            }
+          },
+          "behaviour": {
+            "name": "Behaviour",
+            "data": {
+              "clock_in_mode": "On arrival",
+              "clock_out_mode": "On departure",
+              "backdate": "Use the time of arrival/departure",
+              "short_leave_break": "Short absence as break"
+            },
+            "data_description": {
+              "clock_in_mode": "Off, ask via notification or stamp automatically.",
+              "clock_out_mode": "Off, ask via notification or stamp automatically.",
+              "backdate": "Stamps get the time you actually arrived or left instead of the time of the stamp.",
+              "short_leave_break": "With automatic clock out: an absence up to this long is stamped as a break instead. 0 = off."
+            }
+          },
+          "timing": {
+            "name": "Delays and time window",
+            "description": "Protects against GPS jumps and stamping at the wrong time.",
+            "data": {
+              "arrival_delay": "Arrival delay",
+              "departure_delay": "Departure delay",
+              "window_start": "Earliest clock in",
+              "window_end": "Latest clock in",
+              "once_per_day": "Clock in automatically only once a day"
+            },
+            "data_description": {
+              "arrival_delay": "You must be at work this long before anything happens (protects against GPS jumps).",
+              "departure_delay": "You must be away this long before anything happens."
+            }
+          },
+          "nfc": {
+            "name": "NFC tags",
+            "data": {
+              "nfc_tags": "NFC tag IDs"
+            },
+            "data_description": {
+              "nfc_tags": "Scanning one of these tags clocks in or out immediately."
+            }
+          }
+        }
+      },
+      "home_office": {
+        "title": "Home office",
+        "description": "{notify_hint}Working from home is detected when you are at home on a working day and one of the signals is active.",
+        "sections": {
+          "detection": {
+            "name": "Detection",
+            "description": "One signal is enough. The person must be at home.",
+            "data": {
+              "person": "Person",
+              "home_office_power_sensor": "Power (PC plug)",
+              "home_office_power_threshold": "Power from",
+              "home_office_presence_sensors": "Presence sensors / PC status"
+            },
+            "data_description": {
+              "home_office_power_threshold": "From this power on the PC counts as in use. Choose more than the standby consumption.",
+              "home_office_presence_sensors": "E.g. a presence sensor at the desk or “session unlocked” from HASS.Agent."
+            }
+          },
+          "behaviour": {
+            "name": "Behaviour",
+            "data": {
+              "home_office_clock_in_mode": "When work starts",
+              "home_office_clock_out_mode": "When inactive",
+              "home_office_short_break": "Inactivity as break up to"
+            },
+            "data_description": {
+              "home_office_clock_in_mode": "Off, ask via notification or clock in automatically.",
+              "home_office_clock_out_mode": "Off, ask or clock out automatically when there is no more activity. The stamp gets the time the inactivity began.",
+              "home_office_short_break": "With automatic clock out: inactivity up to this long is stamped as a break, longer as end of work. 0 = off."
+            }
+          },
+          "timing": {
+            "name": "Delays and time window",
+            "data": {
+              "home_office_activity_delay": "Activity at least",
+              "home_office_idle_timeout": "Inactive after",
+              "home_office_window_start": "Earliest clock in",
+              "home_office_window_end": "Latest clock in"
+            },
+            "data_description": {
+              "home_office_activity_delay": "A signal must be active this long without interruption.",
+              "home_office_idle_timeout": "Without any signal for this long, work counts as ended or interrupted."
+            }
+          }
+        }
+      },
+      "reminders": {
+        "title": "Reminders",
+        "description": "{notify_hint}Reminders have buttons to clock out and to remind you later.",
+        "sections": {
+          "end_of_day": {
+            "name": "End of day",
+            "data": {
+              "end_of_day_reminder": "End of day reminder",
+              "end_of_day_grace": "Grace period",
+              "max_work_hours": "Maximum working time"
+            },
+            "data_description": {
+              "end_of_day_reminder": "Asks whether to clock out once clock in time + target working time + required break + grace period has passed.",
+              "end_of_day_grace": "Time after reaching the target working time before you are reminded.",
+              "max_work_hours": "Warns when today's working time reaches this value. 0 = off."
+            }
+          },
+          "still_clocked_in": {
+            "name": "Still clocked in",
+            "data": {
+              "remind_on_leave": "Remind when leaving work",
+              "reminder_time": "Daily reminder at",
+              "forgotten_check_time": "Check for forgotten clock out at",
+              "snooze_minutes": "Snooze for"
+            },
+            "data_description": {
+              "remind_on_leave": "If departures are not handled automatically, you are reminded when you leave while still clocked in.",
+              "reminder_time": "Reminds you at this time if you are still clocked in. Empty = off.",
+              "forgotten_check_time": "If a shift from a previous day is still running, you are offered to clock out with the time you left. Empty = off.",
+              "snooze_minutes": "Delay of the \"Remind me later\" button."
+            }
+          }
+        }
+      },
+      "breaks": {
+        "title": "Breaks",
+        "description": "{notify_hint}Reminds you of breaks and checks the required break when you clock out.",
+        "sections": {
+          "during_work": {
+            "name": "While working",
+            "data": {
+              "break_reminder_after": "Remind about a break after",
+              "break_duration": "Break duration",
+              "break_end_reminder": "Notify when the break is over",
+              "auto_resume": "Resume work automatically after the break",
+              "lunch_break_time": "Start lunch break automatically at"
+            },
+            "data_description": {
+              "break_reminder_after": "Continuous working time without a break. 0 = off.",
+              "break_duration": "Used for the end-of-break notification, automatic resume and lunch break.",
+              "lunch_break_time": "Starts a break at this time if you are clocked in. Empty = off."
+            }
+          },
+          "break_check": {
+            "name": "Break check when clocking out",
+            "description": "Defaults follow the German Working Hours Act.",
+            "data": {
+              "break_check": "Check breaks when clocking out",
+              "break_after_6h": "Required break after 6 h",
+              "break_after_9h": "Required break after 9 h"
+            },
+            "data_description": {
+              "break_check": "If the break was too short, you are offered to add the missing break.",
+              "break_after_6h": "German Working Hours Act: 30 min.",
+              "break_after_9h": "German Working Hours Act: 45 min."
+            }
+          }
+        }
+      },
+      "advanced": {
+        "title": "Advanced",
+        "description": "You normally do not need to change these values.",
+        "data": {
+          "update_interval": "Status update interval",
+          "absence_states": "Absence states shown in the calendar",
+          "stamp_note": "Default stamp note",
+          "stamp_time_account_id": "Default time account ID"
+        },
+        "data_description": {
+          "update_interval": "How often the stamp status is fetched from Crewmeister (300–3600 seconds).",
+          "absence_states": "Absences with these states appear in the calendar.",
+          "stamp_note": "Added to stamps created by buttons, or by the service when it has no note.",
+          "stamp_time_account_id": "Time account assigned to stamps unless the service call specifies one."
+        },
+        "sections": {
+          "location": {
+            "name": "Location on stamps",
+            "description": "Optionally the work location is sent with every stamp made via Home Assistant. Your employer can see it in Crewmeister as well.",
+            "data": {
+              "stamp_location": "Send work location",
+              "location_office": "Text for office",
+              "location_home_office": "Text for home office"
+            },
+            "data_description": {
+              "location_office": "Empty = “Office”",
+              "location_home_office": "Empty = “Home office”"
+            }
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "absence_states": {
+      "options": {
+        "APPROVED": "Approved",
+        "PRE_APPROVED": "Pre-approved",
+        "REQUESTED": "Requested",
+        "REJECTED": "Rejected",
+        "DRAFT": "Draft",
+        "REVOKED": "Revoked"
+      }
+    },
+    "stamp_type": {
+      "options": {
+        "START_WORK": "Start work",
+        "START_BREAK": "Start break",
+        "CLOCK_OUT": "Clock out"
+      }
+    },
+    "weekday": {
+      "options": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      }
+    },
+    "stamp_mode": {
+      "options": {
+        "off": "Off",
+        "ask": "Ask",
+        "auto": "Automatic"
       }
     }
   },
   "entity": {
     "sensor": {
       "status": {
-        "name": "Status"
+        "name": "Status",
+        "state": {
+          "clocked_in": "Clocked in",
+          "on_break": "On break",
+          "clocked_out": "Clocked out"
+        }
       },
       "last_stamp": {
         "name": "Last stamp"
+      },
+      "work_time_today": {
+        "name": "Work time today",
+        "state_attributes": {
+          "shift_start": {
+            "name": "Shift start"
+          },
+          "work_since_break": {
+            "name": "Work since last break"
+          },
+          "target": {
+            "name": "Target working time"
+          },
+          "expected_end": {
+            "name": "Expected end of day"
+          }
+        }
+      },
+      "break_time_today": {
+        "name": "Break time today",
+        "state_attributes": {
+          "required_break": {
+            "name": "Required break"
+          },
+          "missing_break": {
+            "name": "Missing break"
+          }
+        }
+      },
+      "work_location": {
+        "name": "Work location",
+        "state": {
+          "office": "Office",
+          "home_office": "Home office",
+          "none": "Not at work"
+        },
+        "state_attributes": {
+          "since": {
+            "name": "Since"
+          }
+        }
       }
     },
     "binary_sensor": {
       "working": {
-        "name": "Clocked in"
+        "name": "Clocked in",
+        "state_attributes": {
+          "on_break": {
+            "name": "On break"
+          }
+        }
+      },
+      "on_break": {
+        "name": "On break",
+        "state_attributes": {
+          "since": {
+            "name": "Since"
+          }
+        }
+      },
+      "workday": {
+        "name": "Working day",
+        "state_attributes": {
+          "reason": {
+            "name": "Reason",
+            "state": {
+              "weekday": "Not a working day",
+              "workday_sensor": "Workday sensor is off",
+              "absence": "Absence"
+            }
+          }
+        }
+      },
+      "absent": {
+        "name": "Vacation / absence",
+        "state_attributes": {
+          "absence_type": {
+            "name": "Absence type"
+          },
+          "start": {
+            "name": "Start"
+          },
+          "end": {
+            "name": "End"
+          }
+        }
       }
     },
     "button": {
@@ -62,36 +465,73 @@
       "absences": {
         "name": "Absences"
       }
+    },
+    "switch": {
+      "auto_stamp": {
+        "name": "Automatic stamping"
+      }
+    }
+  },
+  "exceptions": {
+    "already_clocked_in": {
+      "message": "You are already clocked in."
+    },
+    "no_shift_to_pause": {
+      "message": "There is no active shift to pause."
+    },
+    "no_shift_to_clock_out": {
+      "message": "There is no active shift to clock out from."
+    },
+    "stamp_failed": {
+      "message": "Failed to create the Crewmeister stamp: {error}"
+    },
+    "absences_failed": {
+      "message": "Failed to fetch Crewmeister absences: {error}"
+    },
+    "entry_not_found": {
+      "message": "Crewmeister configuration entry {entry_id} was not found."
+    },
+    "entry_not_loaded": {
+      "message": "Crewmeister configuration entry {entry_id} is not loaded."
+    },
+    "no_entries": {
+      "message": "No Crewmeister account is configured."
+    },
+    "multiple_entries": {
+      "message": "Several Crewmeister accounts are configured. Select the account to stamp for."
+    },
+    "insecure_url": {
+      "message": "The Crewmeister API URL does not use HTTPS. Please set up the integration again with an https:// address."
     }
   },
   "services": {
     "create_stamp": {
       "name": "Create stamp",
-      "description": "Create a Crewmeister time tracking stamp.",
+      "description": "Creates a Crewmeister stamp.",
       "fields": {
         "stamp_type": {
           "name": "Stamp type",
-          "description": "Type of stamp to create."
+          "description": "Kind of stamp."
         },
         "timestamp": {
           "name": "Timestamp",
-          "description": "Optional timestamp for the stamp (defaults to now)."
+          "description": "Time of the stamp (default: now)."
         },
         "note": {
           "name": "Note",
-          "description": "Optional note to attach to the stamp."
+          "description": "Note attached to the stamp. Overrides the default note."
         },
         "location": {
           "name": "Location",
-          "description": "Optional location to attach to the stamp."
+          "description": "Location attached to the stamp."
         },
         "time_account_id": {
           "name": "Time account ID",
-          "description": "Optional time account identifier to associate with the stamp."
+          "description": "Time account assigned to the stamp. Overrides the default time account."
         },
         "config_entry_id": {
-          "name": "Configuration entry",
-          "description": "Target a specific Crewmeister configuration entry (optional)."
+          "name": "Account",
+          "description": "Crewmeister account to stamp for. Required if several accounts are configured."
         }
       }
     }
