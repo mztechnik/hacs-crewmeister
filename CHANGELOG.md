@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.0.0 – unveröffentlicht
+
+Neu aufgebauter Assistent: verlässlicheres automatisches Stempeln und weniger Einstellungen. Bestehende Einstellungen werden beim Update übernommen (siehe README, „Update von 0.4 / 0.5 auf 1.0“).
+
+### Neu
+- **Wegzeit:** Kommen wird mit Auslösezeit + X min gestempelt, Gehen mit Auslösezeit − Y min (nur Büro).
+- **Pausenzeitraum:** Gehen in diesem Zeitraum startet eine Pause, Zurückkommen beendet sie. Optional startet die Pause zu Beginn automatisch, und am Ende kommt eine Erinnerung ans Weiterarbeiten.
+- **Feierabend-Zeitraum** ab einer Uhrzeit und/oder ab erreichter Soll-Arbeitszeit. Nur darin stempelt Gehen aus. Mit *Nachholen* wird auch ausgestempelt, wer vorher gegangen und zu Beginn des Zeitraums noch weg ist.
+- **Gehen während der Arbeit stempelt nie aus.** Optional kommt eine Nachfrage mit *Pause* / *Ausstempeln*, die ohne Antwort nach einstellbarer Zeit (Standard 30 min) verfällt.
+- **Urlaub aus Kalender oder Sensor:** ganztägiger Termin in einem Kalender (optional nur mit Stichwort) oder ein Binärsensor bzw. Eingabe-Schalter. Der Binärsensor „Urlaub / Abwesenheit“ nennt die Quelle im Attribut `source`.
+- **Pause nachtragen mit Dauer:** Fehlt beim Ausstempeln die Pause, fragt eine Benachrichtigung nach 15 / 30 / 45 min oder *Keine Pause*. Ohne Antwort wird nach 60 min ein einstellbarer Standardwert (30 min) eingetragen.
+- **Zone und WLAN kombinierbar:** *Eine Quelle reicht* (Gehen erst, wenn alle „weg“ melden) oder *Alle müssen zutreffen*.
+- **Warteschlange:** Stempel, die an Netzwerk oder Server scheitern, werden mit dem ursprünglichen Zeitpunkt bis zu 24 h wiederholt. Ab dem dritten Fehlversuch kommt eine Benachrichtigung.
+- **Abgleich beim Start:** Kommen und Gehen während eines Neustarts von Home Assistant werden danach erkannt.
+- Sensor **„Automatik“** mit der letzten Entscheidung und ihrem Grund. Der Sensor „Arbeitsort“ zeigt zusätzlich Phase und den Zustand jeder Quelle.
+
+### Geändert
+- Büro und Homeoffice nutzen dieselbe Erkennung und dieselben Stempelregeln. Getrennte Modi, Zeitfenster und Pausenregeln fürs Homeoffice entfallen.
+- `unknown`/`unavailable` einer Quelle gilt nicht mehr als „weg“. Kurze Verbindungsabbrüche der Companion App oder ein Neustart führen nicht mehr zu falschem Gehen.
+- Nach jedem Ausstempeln am selben Tag (auch von Hand oder am Terminal) wird beim nächsten Kommen nur noch nachgefragt. Ersetzt „Nur einmal am Tag“.
+- Gestempelt wird immer rückdatiert auf den erkannten Zeitpunkt (bzw. mit Wegzeit), die Option „Rückdatieren“ entfällt.
+- Options-Dialog neu gegliedert: Arbeitszeit & Urlaub, Büro, Homeoffice, Stempelregeln, Benachrichtigungen, Pausen & Erinnerungen, Erweitert. Rund 45 statt 70 Optionen, Feineinstellungen eingeklappt, widersprüchliche Eingaben werden abgelehnt.
+- Der Assistent ist intern in Logik (ohne Home Assistant, vollständig getestet) und mehrere kleine Module aufgeteilt.
+
+### Entfernt
+- NFC-Tags (Ersatz: Automation mit Auslöser *Tag gescannt*, die den Button *Nächster Schritt* drückt).
+- Soll-Arbeitszeit pro Wochentag, es gibt nur noch einen Tageswert.
+- „Kurze Abwesenheit als Pause“, feste Mittagspause und Erinnerung ans Weiterarbeiten zur Uhrzeit (ersetzt durch den Pausenzeitraum).
+- Dauerhafte Statusanzeige für Android (ersetzt durch die Live-Anzeige).
+
+### Migration
+- Config-Entry-Version 2. Beim ersten Start werden die Optionen umgewandelt: *Beim Gehen* → Feierabend-Modus (Feierabend-Zeitraum ab erreichter Soll-Arbeitszeit), *Beim Verlassen erinnern* → Nachfrage beim Gehen, Mittagspause → Pausenzeitraum. Unterschiedliche Modi für Büro und Homeoffice werden zu *Nachfragen*. Die Entitäts-IDs bleiben.
+
 ## 0.5.0 – 2026-10-20
 
 ### Neu

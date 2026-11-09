@@ -8,12 +8,7 @@ import pytest
 
 from custom_components.crewmeister.api import Stamp, WorkStatus
 from custom_components.crewmeister.logic.config import AssistantConfig, StampMode
-from custom_components.crewmeister.logic.home_office import (
-    HomeOfficeEvent,
-    HomeOfficeEventType,
-    HomeOfficeState,
-    advance,
-)
+from custom_components.crewmeister.logic.sources import Combine
 from custom_components.crewmeister.logic.texts import format_duration, text
 from custom_components.crewmeister.logic.workday import (
     NoWorkReason,
@@ -137,7 +132,12 @@ def test_config_parsing() -> None:
             "person": "person.max",
             "work_zones": ["zone.office"],
             "clock_in_mode": "auto",
-            "clock_out_mode": "bogus",
+            "end_of_day_mode": "bogus",
+            "break_window_start": "11:30:00",
+            "break_window_end": "13:30:00",
+            "office_combine": "all",
+            "absence_calendar": "calendar.urlaub",
+            "absence_keywords": [" Urlaub ", ""],
             "arrival_delay": 3.0,
             "max_work_hours": 0,
             "break_reminder_after": 0,
@@ -149,8 +149,12 @@ def test_config_parsing() -> None:
     )
     assert config.notify_targets == ["mobile_app_a", "mobile_app_b"]
     assert config.presence_configured
-    assert config.clock_in_mode == StampMode.AUTO
-    assert config.clock_out_mode == StampMode.OFF
+    assert config.arrival_mode == StampMode.AUTO
+    assert config.end_of_day_mode == StampMode.OFF
+    assert config.break_window == (time(11, 30), time(13, 30))
+    assert config.office_combine == Combine.ALL
+    assert config.absence_calendar == "calendar.urlaub"
+    assert config.absence_keywords == ["Urlaub"]
     assert config.arrival_delay == timedelta(minutes=3)
     assert config.max_work is None
     assert config.break_reminder_after is None
@@ -182,67 +186,6 @@ def test_expected_end() -> None:
     )
     clocked_out = summarize(_stamps(("START_WORK", 8, 0), ("CLOCK_OUT", 9, 0)).stamps, DAY, DAY)
     assert expected_end(clocked_out, timedelta(hours=8), after_6h, after_9h) is None
-
-
-# ------------------------------------------------------------------ home office
-
-T0 = datetime(2026, 10, 19, 8, 0, tzinfo=UTC)
-HO = {
-    "activity_delay": timedelta(minutes=5),
-    "idle_after": timedelta(minutes=30),
-    "short_break": timedelta(minutes=60),
-    "may_start": True,
-}
-
-
-def _at(minutes: int) -> datetime:
-    return T0 + timedelta(minutes=minutes)
-
-
-def test_home_office_session_starts_after_delay_backdated() -> None:
-    state = HomeOfficeState()
-    assert advance(state, True, _at(0), **HO) is None
-    assert advance(state, True, _at(4), **HO) is None
-    event = advance(state, True, _at(5), **HO)
-    assert event == HomeOfficeEvent(HomeOfficeEventType.START, _at(0))
-    assert state.active
-    assert advance(state, True, _at(6), **HO) is None
-
-
-def test_home_office_start_clamped_and_gated() -> None:
-    state = HomeOfficeState()
-    advance(state, True, _at(0), **{**HO, "may_start": False})
-    assert advance(state, True, _at(30), **{**HO, "may_start": False}) is None
-    event = advance(state, True, _at(31), **HO, earliest_start=_at(20))
-    assert event == HomeOfficeEvent(HomeOfficeEventType.START, _at(20))
-
-
-def test_home_office_flicker_and_break() -> None:
-    state = HomeOfficeState(session_since=_at(0))
-    # Short inactivity is ignored
-    assert advance(state, False, _at(100), **HO) is None
-    assert advance(state, True, _at(110), **HO) is None
-    # Inactivity between 30 and 60 minutes is a break
-    assert advance(state, False, _at(200), **HO) is None
-    assert advance(state, False, _at(235), **HO) is None
-    event = advance(state, True, _at(240), **HO)
-    assert event == HomeOfficeEvent(HomeOfficeEventType.BREAK, _at(200), _at(240))
-    assert state.active
-
-
-def test_home_office_session_ends() -> None:
-    state = HomeOfficeState(session_since=_at(0))
-    advance(state, False, _at(500), **HO)
-    assert advance(state, False, _at(559), **HO) is None
-    assert advance(state, False, _at(560), **HO) == HomeOfficeEvent(
-        HomeOfficeEventType.END, _at(500)
-    )
-    assert not state.active
-    # Without the break window the end is decided after the idle time
-    state = HomeOfficeState(session_since=_at(0))
-    no_break = {**HO, "short_break": timedelta(0)}
-    advance(state, False, _at(500), **no_break)
-    assert advance(state, False, _at(530), **no_break).type == HomeOfficeEventType.END
 
 
 def test_only_breaks_of_15_minutes_count_as_rest_breaks() -> None:

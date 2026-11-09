@@ -37,29 +37,29 @@
     "step": {
       "init": {
         "title": "Crewmeister einstellen",
-        "description": "Alle Funktionen sind optional. Jeder Bereich wird beim Absenden direkt gespeichert.",
+        "description": "Alle Funktionen sind optional. Jeder Bereich wird beim Absenden direkt gespeichert. Für automatisches Stempeln: zuerst Büro und/oder Homeoffice einrichten, dann die Stempelregeln.",
         "menu_options": {
-          "schedule": "Arbeitszeit",
-          "notifications": "Benachrichtigungen",
-          "auto_stamp": "Büro",
+          "schedule": "Arbeitszeit & Urlaub",
+          "office": "Büro",
           "home_office": "Homeoffice",
-          "reminders": "Erinnerungen",
-          "breaks": "Pausen",
+          "rules": "Stempelregeln",
+          "notifications": "Benachrichtigungen",
+          "breaks": "Pausen & Erinnerungen",
           "advanced": "Erweitert"
         },
         "menu_option_descriptions": {
-          "schedule": "Arbeitstage, Soll-Arbeitszeit, Feiertage",
+          "schedule": "Arbeitstage, Soll-Arbeitszeit, Feiertage, Urlaub aus Kalender oder Sensor",
+          "office": "Erkennung über Zone und/oder WLAN",
+          "home_office": "Erkennung über Steckdose und Präsenzmelder",
+          "rules": "Kommen, Pausenzeitraum, Feierabend, Wegzeit",
           "notifications": "Handy auswählen, Live-Anzeige, Bestätigungen",
-          "auto_stamp": "Automatisch stempeln über Zonen, WLAN, NFC",
-          "home_office": "Automatisch stempeln über Steckdose und Präsenzmelder",
-          "reminders": "Feierabend, vergessenes Ausstempeln",
-          "breaks": "Pausenerinnerung, Mittagspause, Pausenprüfung",
-          "advanced": "Abfrageintervall, Kalender, Stempel-Standardwerte"
+          "breaks": "Pausenerinnerung, Pause nachtragen, Feierabend-Erinnerung",
+          "advanced": "Ort am Stempel, Abfrageintervall, Stempel-Standardwerte"
         }
       },
       "schedule": {
-        "title": "Arbeitszeit",
-        "description": "Grundlage für Feierabend-Erinnerung, Live-Anzeige und automatisches Einstempeln.",
+        "title": "Arbeitszeit & Urlaub",
+        "description": "An freien Tagen, Feiertagen und bei Urlaub wird nicht automatisch eingestempelt.",
         "data": {
           "workdays": "Arbeitstage",
           "daily_hours": "Tägliche Soll-Arbeitszeit",
@@ -67,21 +67,159 @@
         },
         "data_description": {
           "workdays": "An anderen Tagen wird nicht automatisch eingestempelt.",
-          "daily_hours": "Soll-Arbeitszeit an Arbeitstagen ohne eigenen Wert unten. Grundlage für Feierabend-Erinnerung, Live-Anzeige und den Vorschlag bei vergessenem Ausstempeln.",
+          "daily_hours": "Grundlage für Feierabend-Zeitraum, Feierabend-Erinnerung und Live-Anzeige. 0 = keine Soll-Zeit.",
           "workday_entity": "Optional, z. B. aus der Workday-Integration, um Feiertage auszulassen."
         },
         "sections": {
-          "weekday_hours": {
-            "name": "Abweichende Soll-Arbeitszeit pro Wochentag",
-            "description": "Leer = tägliche Soll-Arbeitszeit, 0 = an diesem Tag keine Soll-Zeit.",
+          "absence": {
+            "name": "Urlaub / Abwesenheit",
             "data": {
-              "hours_mon": "Montag",
-              "hours_tue": "Dienstag",
-              "hours_wed": "Mittwoch",
-              "hours_thu": "Donnerstag",
-              "hours_fri": "Freitag",
-              "hours_sat": "Samstag",
-              "hours_sun": "Sonntag"
+              "absence_calendar": "Urlaubskalender",
+              "absence_keywords": "Nur Termine mit diesen Wörtern",
+              "absence_sensor": "Urlaubs-Schalter",
+              "absence_states": "Abwesenheiten aus Crewmeister mit Status"
+            },
+            "data_description": {
+              "absence_calendar": "Ein ganztägiger Termin heute gilt als Urlaub, z. B. aus deinem privaten Kalender.",
+              "absence_keywords": "Z. B. „Urlaub“. Leer = jeder ganztägige Termin.",
+              "absence_sensor": "Binärsensor oder Eingabe-Schalter, der im Urlaub an ist.",
+              "absence_states": "Gilt auch für den Kalender der Integration."
+            },
+            "description": "Abwesenheiten aus Crewmeister werden immer berücksichtigt."
+          },
+          "window": {
+            "name": "Zeitfenster fürs Einstempeln",
+            "data": {
+              "window_start": "Frühestens",
+              "window_end": "Spätestens"
+            },
+            "data_description": {
+              "window_start": "Wer früher ankommt, wird zu dieser Uhrzeit eingestempelt.",
+              "window_end": "Danach wird nicht mehr automatisch eingestempelt."
+            }
+          }
+        }
+      },
+      "office": {
+        "title": "Büro",
+        "description": "Woran erkannt wird, dass du im Büro bist. Was dann gestempelt wird, legst du unter „Stempelregeln“ fest.",
+        "sections": {
+          "detection": {
+            "name": "Erkennung",
+            "data": {
+              "person": "Person",
+              "work_zones": "Büro-Zonen",
+              "wifi_sensor": "WLAN-Sensor",
+              "wifi_ssids": "WLAN-Namen im Büro (SSID)",
+              "presence_entities": "Weitere Anwesenheits-Entitäten",
+              "office_combine": "Mehrere Quellen"
+            },
+            "data_description": {
+              "person": "Home-Assistant-Person dieses Crewmeister-Benutzers. Nötig für Zonen und Homeoffice.",
+              "work_zones": "Aufenthalt in einer dieser Zonen gilt als „im Büro“.",
+              "wifi_sensor": "WLAN-Verbindungssensor der Companion App, z. B. sensor.handy_wifi_connection.",
+              "wifi_ssids": "Verbindung mit einem dieser Netze gilt als „im Büro“.",
+              "presence_entities": "Binärsensoren oder Eingabe-Schalter, die im Büro an sind.",
+              "office_combine": "Gilt, wenn mehrere Quellen eingerichtet sind. Ein nicht verfügbarer Sensor zählt nie als „weg“."
+            }
+          },
+          "timing": {
+            "name": "Bestätigungszeiten",
+            "data": {
+              "arrival_delay": "Kommen bestätigen nach",
+              "departure_delay": "Gehen bestätigen nach"
+            },
+            "data_description": {
+              "arrival_delay": "So lange musst du da sein, bevor etwas passiert. Gestempelt wird trotzdem der Zeitpunkt des Ankommens.",
+              "departure_delay": "So lange musst du weg sein. Schützt vor WLAN-Abbrüchen und GPS-Sprüngen."
+            }
+          }
+        }
+      },
+      "home_office": {
+        "title": "Homeoffice",
+        "description": "Homeoffice wird erkannt, wenn du zu Hause bist und eines der Signale aktiv ist. Es gelten dieselben Stempelregeln wie im Büro, nur ohne Wegzeit.",
+        "sections": {
+          "detection": {
+            "name": "Erkennung",
+            "data": {
+              "person": "Person",
+              "home_office_power_sensor": "Leistung (Steckdose am PC)",
+              "home_office_power_threshold": "Ab Leistung",
+              "home_office_presence_sensors": "Präsenzmelder / PC-Status"
+            },
+            "data_description": {
+              "home_office_power_threshold": "Ab dieser Leistung gilt der PC als in Benutzung. Höher als den Standby-Verbrauch wählen.",
+              "home_office_presence_sensors": "Z. B. Präsenzmelder am Schreibtisch oder „Sitzung entsperrt“ von HASS.Agent."
+            },
+            "description": "Es genügt ein Signal. Die Person muss zu Hause sein."
+          },
+          "timing": {
+            "name": "Bestätigungszeiten",
+            "data": {
+              "home_office_activity_delay": "Aktivität mindestens",
+              "home_office_idle_timeout": "Inaktiv nach"
+            },
+            "data_description": {
+              "home_office_activity_delay": "So lange muss ein Signal am Stück aktiv sein.",
+              "home_office_idle_timeout": "So lange ohne Signal gilt das als Gehen (Pause oder Feierabend je nach Stempelregeln)."
+            }
+          }
+        }
+      },
+      "rules": {
+        "title": "Stempelregeln",
+        "description": "{notify_hint}Gilt für Büro und Homeoffice. „Nachfragen“ schickt eine Benachrichtigung mit Knöpfen. Außerhalb von Pausenzeitraum und Feierabend wird beim Gehen nie ausgestempelt.",
+        "sections": {
+          "arrival": {
+            "name": "Kommen",
+            "data": {
+              "clock_in_mode": "Beim Ankommen",
+              "arrival_offset": "Wegzeit zum Arbeitsplatz"
+            },
+            "data_description": {
+              "clock_in_mode": "Wurde heute schon ausgestempelt, wird statt automatisch nur nachgefragt.",
+              "arrival_offset": "Wird auf den Zeitpunkt des Ankommens addiert, z. B. vom Parkplatz zum Schreibtisch (nur Büro)."
+            }
+          },
+          "break_window": {
+            "name": "Pausenzeitraum",
+            "data": {
+              "break_mode": "Gehen im Pausenzeitraum",
+              "break_window_start": "Von",
+              "break_window_end": "Bis",
+              "break_window_auto": "Pause automatisch zu Beginn starten",
+              "break_window_resume": "Am Ende ans Weiterarbeiten erinnern"
+            },
+            "data_description": {
+              "break_mode": "Gehen in diesem Zeitraum startet eine Pause, Zurückkommen beendet sie.",
+              "break_window_auto": "Startet die Pause auch ohne zu gehen, z. B. Mittagspause am Schreibtisch."
+            }
+          },
+          "end_of_day": {
+            "name": "Feierabend",
+            "data": {
+              "end_of_day_mode": "Gehen im Feierabend-Zeitraum",
+              "end_of_day_time": "Feierabend-Zeitraum ab Uhrzeit",
+              "end_of_day_on_target": "Ab erreichter Soll-Arbeitszeit",
+              "departure_offset": "Wegzeit vom Arbeitsplatz",
+              "catch_up": "Ausstempeln nachholen"
+            },
+            "data_description": {
+              "end_of_day_mode": "Gehen ab dieser Zeit stempelt aus.",
+              "end_of_day_on_target": "Arbeitsbeginn + Soll-Arbeitszeit + Pflichtpause. Es gilt die frühere der beiden Zeiten.",
+              "departure_offset": "Wird vom Zeitpunkt des Gehens abgezogen (nur Büro).",
+              "catch_up": "Bist du vorher gegangen und zu Beginn des Feierabend-Zeitraums noch weg, wird zum Zeitpunkt des Gehens ausgestempelt."
+            }
+          },
+          "leave": {
+            "name": "Gehen während der Arbeit",
+            "data": {
+              "ask_on_leave": "Nachfragen",
+              "ask_timeout": "Nachfrage verfällt nach"
+            },
+            "data_description": {
+              "ask_on_leave": "Fragt mit den Knöpfen „Pause“ und „Ausstempeln“. Ohne Antwort passiert nichts."
             }
           }
         }
@@ -92,166 +230,30 @@
         "data": {
           "notify_targets": "Geräte",
           "notify_confirmations": "Stempelungen bestätigen",
-          "notify_live": "Live-Anzeige (iOS Live Activity / Android Live Update)",
-          "notify_status": "Dauerhafte Statusanzeige (Android)",
-          "live_icon_work": "Symbol bei der Arbeit",
-          "live_icon_break": "Symbol in der Pause"
+          "notify_live": "Live-Anzeige (iOS Live Activity / Android Live Update)"
         },
         "data_description": {
           "notify_targets": "Geräte mit der Home Assistant Companion App (notify.mobile_app_…). Ohne Gerät werden keine Benachrichtigungen gesendet.",
           "notify_confirmations": "Nach jeder Stempelung durch den Assistenten kommt eine kurze Bestätigung.",
-          "notify_live": "Zeigt Arbeitszeit mit laufender Uhr, Fortschritt zur Soll-Arbeitszeit und den voraussichtlichen Feierabend auf dem Sperrbildschirm. Benötigt Home Assistant 2026.7, iOS 17.2 bzw. die aktuelle Android-App. Ersetzt die dauerhafte Statusanzeige. iOS bekommt zusätzlich eine stille Benachrichtigung mit den Knöpfen, die Live Activities nicht zeigen können.",
-          "notify_status": "Zeigt während der Arbeit eine dauerhafte Benachrichtigung mit laufender Uhr und Knöpfen. Wird nicht genutzt, wenn die Live-Anzeige an ist.",
-          "live_icon_work": "Wird in der Live-Anzeige gezeigt, z. B. mdi:account-hard-hat (Bauarbeiter).",
-          "live_icon_break": "Wird in der Live-Anzeige gezeigt, z. B. mdi:pretzel (Brezel)."
-        }
-      },
-      "auto_stamp": {
-        "title": "Büro",
-        "description": "{notify_hint}Lege fest, woran erkannt wird, dass du bei der Arbeit bist, und was beim Ankommen und Gehen passieren soll.",
+          "notify_live": "Arbeitszeit mit laufender Uhr, Fortschritt und voraussichtlichem Feierabend auf dem Sperrbildschirm. Benötigt Home Assistant 2026.7, iOS 17.2 bzw. die aktuelle Android-App. iOS bekommt zusätzlich eine stille Benachrichtigung mit Knöpfen."
+        },
         "sections": {
-          "detection": {
-            "name": "Erkennung",
-            "description": "Es genügt, wenn eine der Quellen zutrifft.",
+          "live_icons": {
+            "name": "Symbole der Live-Anzeige",
             "data": {
-              "person": "Person",
-              "work_zones": "Arbeitsort-Zonen",
-              "wifi_sensor": "WLAN-Sensor",
-              "wifi_ssids": "WLAN-Namen am Arbeitsort (SSID)",
-              "presence_entities": "Weitere Anwesenheits-Entitäten"
+              "live_icon_work": "Bei der Arbeit",
+              "live_icon_break": "In der Pause"
             },
             "data_description": {
-              "person": "Home-Assistant-Person dieses Crewmeister-Benutzers.",
-              "work_zones": "Aufenthalt in einer dieser Zonen gilt als „bei der Arbeit“.",
-              "wifi_sensor": "WLAN-Verbindungssensor der Companion App (zuverlässiger als GPS).",
-              "wifi_ssids": "Verbindung mit einem dieser Netze gilt als „bei der Arbeit“.",
-              "presence_entities": "Binärsensoren oder Eingabe-Schalter, die bei der Arbeit an sind."
-            }
-          },
-          "behaviour": {
-            "name": "Verhalten",
-            "data": {
-              "clock_in_mode": "Beim Ankommen",
-              "clock_out_mode": "Beim Gehen",
-              "backdate": "Zeitpunkt von Ankunft/Verlassen verwenden",
-              "short_leave_break": "Kurze Abwesenheit als Pause"
-            },
-            "data_description": {
-              "clock_in_mode": "Aus, per Benachrichtigung nachfragen oder automatisch stempeln.",
-              "clock_out_mode": "Aus, per Benachrichtigung nachfragen oder automatisch stempeln.",
-              "backdate": "Stempel bekommen den tatsächlichen Zeitpunkt von Ankunft bzw. Verlassen statt des Stempelzeitpunkts.",
-              "short_leave_break": "Bei automatischem Ausstempeln: Abwesenheiten bis zu dieser Dauer werden stattdessen als Pause gestempelt. 0 = aus."
-            }
-          },
-          "timing": {
-            "name": "Verzögerungen und Zeitfenster",
-            "description": "Schutz vor GPS-Sprüngen und Stempeln zur falschen Zeit.",
-            "data": {
-              "arrival_delay": "Verzögerung beim Ankommen",
-              "departure_delay": "Verzögerung beim Gehen",
-              "window_start": "Frühestes Einstempeln",
-              "window_end": "Spätestes Einstempeln",
-              "once_per_day": "Nur einmal am Tag automatisch einstempeln"
-            },
-            "data_description": {
-              "arrival_delay": "So lange musst du am Arbeitsort sein, bevor etwas passiert (Schutz vor GPS-Sprüngen).",
-              "departure_delay": "So lange musst du weg sein, bevor etwas passiert."
-            }
-          },
-          "nfc": {
-            "name": "NFC-Tags",
-            "data": {
-              "nfc_tags": "NFC-Tag-IDs"
-            },
-            "data_description": {
-              "nfc_tags": "Das Scannen eines dieser Tags stempelt sofort ein bzw. aus."
-            }
-          }
-        }
-      },
-      "home_office": {
-        "title": "Homeoffice",
-        "description": "{notify_hint}Homeoffice wird erkannt, wenn du an einem Arbeitstag zu Hause bist und eines der Signale aktiv ist.",
-        "sections": {
-          "detection": {
-            "name": "Erkennung",
-            "description": "Es genügt ein Signal. Die Person muss zu Hause sein.",
-            "data": {
-              "person": "Person",
-              "home_office_power_sensor": "Leistung (Steckdose am PC)",
-              "home_office_power_threshold": "Ab Leistung",
-              "home_office_presence_sensors": "Präsenzmelder / PC-Status"
-            },
-            "data_description": {
-              "home_office_power_threshold": "Ab dieser Leistung gilt der PC als in Benutzung. Höher als den Standby-Verbrauch wählen.",
-              "home_office_presence_sensors": "Z. B. Präsenzmelder am Schreibtisch oder „Sitzung entsperrt“ von HASS.Agent."
-            }
-          },
-          "behaviour": {
-            "name": "Verhalten",
-            "data": {
-              "home_office_clock_in_mode": "Bei Arbeitsbeginn",
-              "home_office_clock_out_mode": "Bei Inaktivität",
-              "home_office_short_break": "Inaktivität als Pause bis"
-            },
-            "data_description": {
-              "home_office_clock_in_mode": "Aus, per Benachrichtigung nachfragen oder automatisch einstempeln.",
-              "home_office_clock_out_mode": "Aus, nachfragen oder automatisch ausstempeln, wenn keine Aktivität mehr da ist. Gestempelt wird auf den Beginn der Inaktivität.",
-              "home_office_short_break": "Bei automatischem Ausstempeln: Inaktivität bis zu dieser Dauer wird als Pause gestempelt, längere als Feierabend. 0 = aus."
-            }
-          },
-          "timing": {
-            "name": "Verzögerungen und Zeitfenster",
-            "data": {
-              "home_office_activity_delay": "Aktivität mindestens",
-              "home_office_idle_timeout": "Inaktiv nach",
-              "home_office_window_start": "Frühestes Einstempeln",
-              "home_office_window_end": "Spätestes Einstempeln"
-            },
-            "data_description": {
-              "home_office_activity_delay": "So lange muss ein Signal am Stück aktiv sein.",
-              "home_office_idle_timeout": "So lange ohne Signal gilt die Arbeit als beendet bzw. unterbrochen."
-            }
-          }
-        }
-      },
-      "reminders": {
-        "title": "Erinnerungen",
-        "description": "{notify_hint}Erinnerungen enthalten Knöpfe zum Ausstempeln und „Später erinnern“.",
-        "sections": {
-          "end_of_day": {
-            "name": "Feierabend",
-            "data": {
-              "end_of_day_reminder": "Feierabend-Erinnerung",
-              "end_of_day_grace": "Karenzzeit",
-              "max_work_hours": "Höchstarbeitszeit"
-            },
-            "data_description": {
-              "end_of_day_reminder": "Fragt, ob du ausstempeln möchtest, sobald Arbeitsbeginn + Soll-Arbeitszeit + Pflichtpause + Karenzzeit vorbei sind.",
-              "end_of_day_grace": "So lange nach Erreichen der Soll-Arbeitszeit wird mit der Erinnerung gewartet.",
-              "max_work_hours": "Warnt, wenn die heutige Arbeitszeit diesen Wert erreicht. 0 = aus."
-            }
-          },
-          "still_clocked_in": {
-            "name": "Noch eingestempelt",
-            "data": {
-              "remind_on_leave": "Beim Verlassen erinnern",
-              "reminder_time": "Tägliche Erinnerung um",
-              "forgotten_check_time": "Vergessenes Ausstempeln prüfen um",
-              "snooze_minutes": "Erinnern in"
-            },
-            "data_description": {
-              "remind_on_leave": "Wird das Gehen nicht automatisch behandelt, erinnert dich der Assistent, wenn du eingestempelt den Arbeitsort verlässt.",
-              "reminder_time": "Erinnert zu dieser Uhrzeit, falls du noch eingestempelt bist. Leer = aus.",
-              "forgotten_check_time": "Läuft noch eine Schicht von einem Vortag, wird Ausstempeln mit der Uhrzeit angeboten, zu der du gegangen bist. Leer = aus.",
-              "snooze_minutes": "Verzögerung des Knopfs „Später erinnern“."
+              "live_icon_work": "Z. B. mdi:account-hard-hat (Bauarbeiter).",
+              "live_icon_break": "Z. B. mdi:pretzel (Brezel)."
             }
           }
         }
       },
       "breaks": {
-        "title": "Pausen",
-        "description": "{notify_hint}Erinnert an Pausen und prüft beim Ausstempeln die vorgeschriebene Pause.",
+        "title": "Pausen & Erinnerungen",
+        "description": "{notify_hint}Erinnerungen enthalten Knöpfe zum Stempeln und „Später erinnern“.",
         "sections": {
           "during_work": {
             "name": "Während der Arbeit",
@@ -259,27 +261,49 @@
               "break_reminder_after": "An Pause erinnern nach",
               "break_duration": "Pausendauer",
               "break_end_reminder": "Benachrichtigen, wenn die Pause vorbei ist",
-              "auto_resume": "Nach der Pause automatisch weiterarbeiten",
-              "lunch_break_time": "Mittagspause automatisch starten um",
-              "resume_reminder_time": "Ans Weiterarbeiten erinnern um"
+              "auto_resume": "Nach der Pause automatisch weiterarbeiten"
             },
             "data_description": {
               "break_reminder_after": "Durchgehende Arbeitszeit ohne Pause. 0 = aus.",
-              "break_duration": "Für die Benachrichtigung am Pausenende, das automatische Weiterarbeiten und die Mittagspause.",
-              "lunch_break_time": "Startet zu dieser Uhrzeit eine Pause, falls du eingestempelt bist. Leer = aus.",
-              "resume_reminder_time": "Schickt zu dieser Uhrzeit eine Benachrichtigung mit dem Knopf „Weiterarbeiten“, falls du noch in der Pause bist. Leer = aus."
+              "break_duration": "Für die Benachrichtigung am Pausenende und das automatische Weiterarbeiten."
             }
           },
           "break_check": {
-            "name": "Pausenprüfung beim Ausstempeln",
-            "description": "Standardwerte nach Arbeitszeitgesetz.",
+            "name": "Pause nachtragen",
             "data": {
-              "break_check": "Pausen beim Ausstempeln prüfen",
+              "break_check": "Beim Ausstempeln prüfen",
+              "break_default": "Ohne Antwort eintragen",
+              "break_question_timeout": "Antwort abwarten"
+            },
+            "data_description": {
+              "break_check": "Fehlt die vorgeschriebene Pause, wird gefragt, wie lang sie war (15 / 30 / 45 min oder keine).",
+              "break_default": "Diese Pause wird eingetragen, wenn du nicht antwortest. 0 = nichts eintragen."
+            }
+          },
+          "end_of_day": {
+            "name": "Erinnerungen",
+            "data": {
+              "end_of_day_reminder": "Feierabend-Erinnerung",
+              "max_work_hours": "Höchstarbeitszeit",
+              "reminder_time": "Tägliche Erinnerung um",
+              "forgotten_check_time": "Vergessenes Ausstempeln prüfen um"
+            },
+            "data_description": {
+              "end_of_day_reminder": "Fragt nach Arbeitsbeginn + Soll-Arbeitszeit + Pflichtpause + Karenzzeit, ob du ausstempeln möchtest.",
+              "max_work_hours": "Warnt, wenn die heutige Arbeitszeit diesen Wert erreicht. 0 = aus.",
+              "reminder_time": "Erinnert zu dieser Uhrzeit, falls du noch eingestempelt bist. Leer = aus.",
+              "forgotten_check_time": "Läuft noch eine Schicht vom Vortag, wird Ausstempeln mit der Uhrzeit angeboten, zu der du gegangen bist. Leer = aus."
+            }
+          },
+          "fine_tuning": {
+            "name": "Feineinstellungen",
+            "data": {
+              "end_of_day_grace": "Karenzzeit Feierabend-Erinnerung",
+              "snooze_minutes": "„Später erinnern“ nach",
               "break_after_6h": "Pflichtpause ab 6 h",
               "break_after_9h": "Pflichtpause ab 9 h"
             },
             "data_description": {
-              "break_check": "War die Pause zu kurz, wird angeboten, die fehlende Pause nachzutragen.",
               "break_after_6h": "Arbeitszeitgesetz: 30 min.",
               "break_after_9h": "Arbeitszeitgesetz: 45 min."
             }
@@ -291,20 +315,17 @@
         "description": "Diese Werte musst du normalerweise nicht ändern.",
         "data": {
           "update_interval": "Aktualisierungsintervall des Status",
-          "absence_states": "Im Kalender angezeigte Abwesenheitsstatus",
           "stamp_note": "Standardnotiz für Stempelungen",
           "stamp_time_account_id": "Standard-Zeitkonto-ID"
         },
         "data_description": {
           "update_interval": "Wie oft der Stempelstatus bei Crewmeister abgefragt wird (300–3600 Sekunden).",
-          "absence_states": "Abwesenheiten mit diesen Status erscheinen im Kalender.",
           "stamp_note": "Wird an Stempelungen per Button angehängt und an Dienstaufrufe ohne eigene Notiz.",
           "stamp_time_account_id": "Zeitkonto für Stempelungen, sofern der Dienstaufruf keins angibt."
         },
         "sections": {
           "location": {
             "name": "Ort am Stempel",
-            "description": "Optional wird bei jeder Stempelung über Home Assistant der Arbeitsort mitgesendet. Er ist in Crewmeister auch für deinen Arbeitgeber sichtbar.",
             "data": {
               "stamp_location": "Arbeitsort mitsenden",
               "location_office": "Text für Büro",
@@ -315,10 +336,19 @@
               "location_office": "Leer = „Büro“",
               "location_home_office": "Leer = „Homeoffice“",
               "location_as_note": "Für Konten, die den Ort eines Stempels nicht setzen dürfen (Fehler beim Stempeln): Der Ort wird stattdessen an die Notiz angehängt."
-            }
+            },
+            "description": "Bei jeder Stempelung über Home Assistant wird der Arbeitsort mitgesendet. Er ist in Crewmeister auch für deinen Arbeitgeber sichtbar."
           }
         }
       }
+    },
+    "error": {
+      "zones_need_person": "Für Zonen muss eine Person ausgewählt sein.",
+      "wifi_incomplete": "Für WLAN werden der Sensor und mindestens ein WLAN-Name benötigt.",
+      "home_office_needs_person": "Für Homeoffice muss eine Person ausgewählt sein.",
+      "break_window_incomplete": "Bitte Beginn und Ende des Pausenzeitraums angeben.",
+      "break_window_missing": "Für Pausen beim Gehen wird ein Pausenzeitraum benötigt.",
+      "end_of_day_never": "Für den Feierabend eine Uhrzeit angeben oder „Ab erreichter Soll-Arbeitszeit“ einschalten."
     }
   },
   "selector": {
@@ -355,6 +385,12 @@
         "off": "Aus",
         "ask": "Nachfragen",
         "auto": "Automatisch"
+      }
+    },
+    "office_combine": {
+      "options": {
+        "any": "Eine Quelle reicht (empfohlen)",
+        "all": "Alle müssen zutreffen (z. B. WLAN reicht bis auf den Parkplatz)"
       }
     }
   },
@@ -409,6 +445,63 @@
         "state_attributes": {
           "since": {
             "name": "Seit"
+          },
+          "phase": {
+            "name": "Phase"
+          },
+          "sources": {
+            "name": "Quellen"
+          }
+        }
+      },
+      "automation": {
+        "name": "Automatik",
+        "state": {
+          "none": "Noch nichts",
+          "arrived": "Angekommen",
+          "returned": "Zurück aus der Pause",
+          "break_window": "Pause (Pausenzeitraum)",
+          "end_of_day": "Feierabend",
+          "catch_up": "Feierabend nachgeholt",
+          "left_during_work": "Während der Arbeit gegangen",
+          "waiting_offset": "Wartet auf Wegzeit",
+          "waiting_window": "Wartet auf Zeitfenster",
+          "waiting_end_of_day": "Wartet auf Feierabend",
+          "disabled": "Automatik ausgeschaltet",
+          "mode_off": "Modus aus",
+          "not_workday": "Kein Arbeitstag",
+          "absent": "Urlaub / Abwesenheit",
+          "outside_window": "Außerhalb des Zeitfensters",
+          "suppressed": "Heute schon ausgestempelt",
+          "already_clocked_in": "Schon eingestempelt",
+          "already_clocked_out": "Schon ausgestempelt",
+          "already_on_break": "Schon in Pause",
+          "no_rule": "Keine Regel zutreffend"
+        },
+        "state_attributes": {
+          "time": {
+            "name": "Zeitpunkt"
+          },
+          "outcome": {
+            "name": "Ergebnis"
+          },
+          "stamp_type": {
+            "name": "Stempelart"
+          },
+          "stamp_time": {
+            "name": "Stempelzeit"
+          },
+          "location": {
+            "name": "Ort"
+          },
+          "result": {
+            "name": "Stempel"
+          },
+          "queued_stamps": {
+            "name": "Stempel in Warteschlange"
+          },
+          "enabled": {
+            "name": "Eingeschaltet"
           }
         }
       }
@@ -454,6 +547,9 @@
           },
           "end": {
             "name": "Ende"
+          },
+          "source": {
+            "name": "Quelle"
           }
         }
       }

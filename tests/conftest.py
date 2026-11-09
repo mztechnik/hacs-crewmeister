@@ -162,7 +162,11 @@ def mock_config_entry() -> MockConfigEntry:
     """Return a Crewmeister config entry."""
 
     return MockConfigEntry(
-        domain=DOMAIN, title="Max Muster", unique_id=str(USER_ID), data=dict(ENTRY_DATA)
+        domain=DOMAIN,
+        title="Max Muster",
+        unique_id=str(USER_ID),
+        data=dict(ENTRY_DATA),
+        version=2,
     )
 
 

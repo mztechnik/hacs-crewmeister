@@ -34,13 +34,10 @@ CONF_STAMP_TIME_ACCOUNT_ID: Final = "stamp_time_account_id"
 CONF_WORKDAYS: Final = "workdays"
 CONF_WORKDAY_ENTITY: Final = "workday_entity"
 CONF_DAILY_HOURS: Final = "daily_hours"
-# Optional target hours per weekday: hours_mon ... hours_sun
-CONF_WEEKDAY_HOURS_PREFIX: Final = "hours_"
 
 # Options: notifications
 CONF_NOTIFY_TARGETS: Final = "notify_targets"
 CONF_NOTIFY_CONFIRMATIONS: Final = "notify_confirmations"
-CONF_NOTIFY_STATUS: Final = "notify_status"
 CONF_NOTIFY_LIVE: Final = "notify_live"
 CONF_LIVE_ICON_WORK: Final = "live_icon_work"
 CONF_LIVE_ICON_BREAK: Final = "live_icon_break"
@@ -53,28 +50,42 @@ CONF_WORK_ZONES: Final = "work_zones"
 CONF_WIFI_SENSOR: Final = "wifi_sensor"
 CONF_WIFI_SSIDS: Final = "wifi_ssids"
 CONF_PRESENCE_ENTITIES: Final = "presence_entities"
-CONF_NFC_TAGS: Final = "nfc_tags"
+# Mode when arriving (name kept from version 1)
 CONF_CLOCK_IN_MODE: Final = "clock_in_mode"
-CONF_CLOCK_OUT_MODE: Final = "clock_out_mode"
 CONF_ARRIVAL_DELAY: Final = "arrival_delay"
 CONF_DEPARTURE_DELAY: Final = "departure_delay"
-CONF_SHORT_LEAVE_BREAK: Final = "short_leave_break"
 CONF_WINDOW_START: Final = "window_start"
 CONF_WINDOW_END: Final = "window_end"
-CONF_BACKDATE: Final = "backdate"
-CONF_ONCE_PER_DAY: Final = "once_per_day"
+
+# Options: stamping rules (V2)
+CONF_OFFICE_COMBINE: Final = "office_combine"
+CONF_ARRIVAL_OFFSET: Final = "arrival_offset"
+CONF_DEPARTURE_OFFSET: Final = "departure_offset"
+CONF_BREAK_MODE: Final = "break_mode"
+CONF_BREAK_WINDOW_START: Final = "break_window_start"
+CONF_BREAK_WINDOW_END: Final = "break_window_end"
+# Start a break at the begin of the break window even without leaving
+CONF_BREAK_WINDOW_AUTO: Final = "break_window_auto"
+# Remind to resume work at the end of the break window
+CONF_BREAK_WINDOW_RESUME: Final = "break_window_resume"
+CONF_END_OF_DAY_MODE: Final = "end_of_day_mode"
+CONF_END_OF_DAY_TIME: Final = "end_of_day_time"
+CONF_END_OF_DAY_ON_TARGET: Final = "end_of_day_on_target"
+CONF_ASK_ON_LEAVE: Final = "ask_on_leave"
+CONF_ASK_TIMEOUT: Final = "ask_timeout"
+CONF_CATCH_UP: Final = "catch_up"
+
+# Options: absence sources besides Crewmeister (V2)
+CONF_ABSENCE_CALENDAR: Final = "absence_calendar"
+CONF_ABSENCE_KEYWORDS: Final = "absence_keywords"
+CONF_ABSENCE_SENSOR: Final = "absence_sensor"
 
 # Options: home office
 CONF_HO_POWER_SENSOR: Final = "home_office_power_sensor"
 CONF_HO_POWER_THRESHOLD: Final = "home_office_power_threshold"
 CONF_HO_PRESENCE_SENSORS: Final = "home_office_presence_sensors"
-CONF_HO_CLOCK_IN_MODE: Final = "home_office_clock_in_mode"
-CONF_HO_CLOCK_OUT_MODE: Final = "home_office_clock_out_mode"
-CONF_HO_SHORT_BREAK: Final = "home_office_short_break"
 CONF_HO_ACTIVITY_DELAY: Final = "home_office_activity_delay"
 CONF_HO_IDLE_TIMEOUT: Final = "home_office_idle_timeout"
-CONF_HO_WINDOW_START: Final = "home_office_window_start"
-CONF_HO_WINDOW_END: Final = "home_office_window_end"
 
 # Options: location sent with stamps
 CONF_STAMP_LOCATION: Final = "stamp_location"
@@ -84,7 +95,6 @@ CONF_LOCATION_HOME_OFFICE: Final = "location_home_office"
 CONF_LOCATION_AS_NOTE: Final = "location_as_note"
 
 # Options: reminders
-CONF_REMIND_ON_LEAVE: Final = "remind_on_leave"
 CONF_REMINDER_TIME: Final = "reminder_time"
 CONF_MAX_WORK_HOURS: Final = "max_work_hours"
 CONF_FORGOTTEN_CHECK_TIME: Final = "forgotten_check_time"
@@ -100,8 +110,9 @@ CONF_AUTO_RESUME: Final = "auto_resume"
 CONF_BREAK_CHECK: Final = "break_check"
 CONF_BREAK_AFTER_6H: Final = "break_after_6h"
 CONF_BREAK_AFTER_9H: Final = "break_after_9h"
-CONF_LUNCH_BREAK_TIME: Final = "lunch_break_time"
-CONF_RESUME_REMINDER_TIME: Final = "resume_reminder_time"
+# Break added when the user does not answer the break question
+CONF_BREAK_DEFAULT: Final = "break_default"
+CONF_BREAK_QUESTION_TIMEOUT: Final = "break_question_timeout"
 
 DEFAULT_BASE_URL: Final = "https://api.crewmeister.com"
 

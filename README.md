@@ -8,37 +8,59 @@ Diese HACS-Integration bindet Crewmeister in Home Assistant ein. Nach der Einric
 
 - **Buttons** zum Einstempeln, Pausieren und Ausstempeln direkt aus Home Assistant. Dazu **Nächster Schritt**: stempelt je nach Status ein, startet die Pause oder arbeitet weiter, ideal für ein einzelnes Widget (siehe [Widgets](#widgets-android--ios)). Bei eingeschalteter Live-Anzeige gibt es außerdem **Live-Anzeige anzeigen**.
 - **Sensoren** für den aktuellen Status, die letzte Stempelung sowie **Arbeitszeit heute** und **Pausenzeit heute** (zählen live mit; Attribute: Arbeitsbeginn, Arbeit seit letzter Pause, vorgeschriebene und fehlende Pause).
-- **Binärsensoren** „Eingestempelt“, „Pause“, „Arbeitstag“ (Wochentage, optionaler Workday-Sensor für Feiertage, ganztägige Abwesenheit) und „Urlaub / Abwesenheit“.
+- **Binärsensoren** „Eingestempelt“, „Pause“, „Arbeitstag“ (Wochentage, optionaler Workday-Sensor für Feiertage, Urlaub) und „Urlaub / Abwesenheit“ (Crewmeister, Kalender oder Sensor; Attribut `source`).
 - **Kalender** mit den eigenen Abwesenheiten (z. B. Urlaub oder Krankheit), inklusive Unterstützung für Teil-Tag-Abwesenheiten.
-- **Schalter** „Automatisches Stempeln“, sobald Büro- oder Homeoffice-Erkennung eingerichtet ist.
+- **Schalter** „Automatisches Stempeln“, sobald Büro- oder Homeoffice-Erkennung eingerichtet ist (pausiert die Automatik, Erinnerungen bleiben).
 - **Sensor „Arbeitsort“** (*Büro* / *Homeoffice* / *Nicht bei der Arbeit*) aus der Erkennung, unabhängig vom Stempelstatus – ideal als Auslöser für eigene Automationen (z. B. Arbeitszimmer heizen).
+- **Sensor „Automatik“** mit der letzten Entscheidung des Assistenten und ihrem Grund.
 
 ### Assistent (alles optional, standardmäßig aus)
 
-Eingerichtet wird alles pro Crewmeister-Konto unter **Einstellungen → Geräte & Dienste → Crewmeister → Konfigurieren**. Das Menü ist in Bereiche gegliedert; selten benötigte Feineinstellungen sind innerhalb der Formulare eingeklappt. Jeder Bereich wird beim Absenden gespeichert.
+Eingerichtet wird alles pro Crewmeister-Konto unter **Einstellungen → Geräte & Dienste → Crewmeister → Konfigurieren**. Das Menü führt in der Reihenfolge der Einrichtung durch sieben Bereiche; Feineinstellungen sind eingeklappt und haben passende Standardwerte. Jeder Bereich wird beim Absenden gespeichert, ein leeres Feld bedeutet „aus“. Widersprüchliche Eingaben (z. B. Zonen ohne Person) werden mit einer Meldung abgelehnt.
 
 | Bereich | Funktion |
 |---|---|
-| **Arbeitszeit** | Wochentage, optionaler Arbeitstag-Sensor (z. B. [Workday](https://www.home-assistant.io/integrations/workday/) für Feiertage), tägliche Soll-Arbeitszeit und optional eine eigene Soll-Arbeitszeit pro Wochentag (z. B. Freitag 5,5 h) |
-| **Benachrichtigungen** | Geräte mit der Companion App (Android und iOS). Benachrichtigungen haben Antwortknöpfe, z. B. *Einstempeln*, *Pause*, *Ausstempeln* oder *In 30 min erinnern*. Optional gibt es Bestätigungen nach jeder Stempelung und eine **Live-Anzeige** (iOS Live Activity / Android Live Update): Arbeitszeit mit laufender Uhr, Fortschrittsbalken bis zur Soll-Arbeitszeit und voraussichtlicher Feierabend auf dem Sperrbildschirm. Ersatzweise gibt es auf Android eine dauerhafte Statusanzeige mit Knöpfen |
-| **Büro** | *Erkennung:* HA-Person mit Arbeitsort-Zonen, WLAN-Sensor der Companion App mit SSIDs, beliebige Binärsensoren/Eingabe-Schalter, NFC-Tags (Scannen stempelt ein bzw. aus) *Verhalten:* Für Ankommen und Gehen getrennt: *Aus*, *Nachfragen* (Benachrichtigung mit Knöpfen) oder *Automatisch*. Verzögerungen gegen GPS-Sprünge, Zeitfenster, nur einmal am Tag, Rückdatieren auf den tatsächlichen Zeitpunkt, kurze Abwesenheiten als Pause. Kein automatisches Einstempeln an freien Tagen, Feiertagen (über Arbeitstag-Sensor) oder bei Urlaub |
-| **Homeoffice** | Erkennung über eine **Steckdose mit Leistungsmessung** (PC zieht mehr als z. B. 30 W) und/oder **Präsenzmelder bzw. PC-Status**, während die Person zu Hause ist – nur an Arbeitstagen und im Zeitfenster. Einstempeln *Aus/Nachfragen/Automatisch* (rückdatiert auf den Beginn der Aktivität), bei Inaktivität *Aus/Nachfragen/Automatisch* ausstempeln (rückdatiert auf den Beginn der Inaktivität). Kurze Inaktivität (Standard bis 60 min) wird als Pause gestempelt. Bist du inzwischen im Büro (Büro-Erkennung eingerichtet), beendet der PC zu Hause die Schicht nicht |
-| **Erinnerungen** | **Feierabend-Erinnerung** nach Arbeitsbeginn + Soll-Arbeitszeit + Pflichtpause + Karenzzeit (bereits genommene Pausen zählen mit), Erinnerung beim Verlassen des Arbeitsorts, tägliche Erinnerung zu einer Uhrzeit, Warnung bei Höchstarbeitszeit. **Vergessenes Ausstempeln:** Läuft morgens noch die Schicht vom Vortag, bietet der Assistent an, rückwirkend auszustempeln – mit der Uhrzeit, zu der du den Arbeitsort verlassen hast, sonst mit Arbeitsbeginn + tägliche Arbeitszeit + Pause |
-| **Pausen** | Erinnerung nach X Stunden ohne Pause, Benachrichtigung am Pausenende (oder automatisch weiterarbeiten), automatische Mittagspause zu einer Uhrzeit, Erinnerung ans Weiterarbeiten zu einer festen Uhrzeit (mit Knopf *Weiterarbeiten*, nur wenn du dann noch in der Pause bist). Beim Ausstempeln wird die Pause nach Arbeitszeitgesetz geprüft (es zählen nur Pausen ab 15 Minuten); fehlt Pause, kann sie per Knopf in Crewmeister **nachgetragen** werden |
-| **Erweitert** | Abfrageintervall, im Kalender angezeigte Abwesenheitsstatus, Standardnotiz und Zeitkonto-ID für Stempelungen. Optional **Ort am Stempel**: „Büro“ bzw. „Homeoffice“ (Texte anpassbar) wird bei jeder Stempelung über Home Assistant mitgesendet und ist in Crewmeister auch für den Arbeitgeber sichtbar. Darf dein Konto den Ort nicht setzen (Fehler beim Stempeln), sendet die Option *Ort als Notiz senden* ihn stattdessen in der Notiz mit |
+| **Arbeitszeit & Urlaub** | Wochentage, tägliche Soll-Arbeitszeit, optionaler Arbeitstag-Sensor (z. B. [Workday](https://www.home-assistant.io/integrations/workday/) für Feiertage). **Urlaub** kommt aus Crewmeister (immer), optional aus einem **Kalender** (ganztägiger Termin heute, optional nur mit Stichwort wie „Urlaub“) und/oder einem **Binärsensor bzw. Eingabe-Schalter**. Eingeklappt: Zeitfenster fürs Einstempeln (Standard 05:00–22:00) |
+| **Büro** | Erkennung über HA-Person mit **Zonen**, den **WLAN-Sensor** der Companion App mit SSIDs und/oder weitere Binärsensoren. Bei mehreren Quellen: *Eine Quelle reicht* (Standard) oder *Alle müssen zutreffen*. Eingeklappt: Bestätigungszeiten (Kommen 2 min, Gehen 10 min) |
+| **Homeoffice** | Erkennung über eine **Steckdose mit Leistungsmessung** (PC zieht mehr als z. B. 30 W) und/oder **Präsenzmelder bzw. PC-Status**, während die Person zu Hause ist. Eingeklappt: Aktivität mindestens 5 min, inaktiv nach 30 min |
+| **Stempelregeln** | Gelten für Büro und Homeoffice, jeweils *Aus*, *Nachfragen* (Benachrichtigung mit Knöpfen) oder *Automatisch*: **Kommen** mit Wegzeit, **Pausenzeitraum**, **Feierabend** mit Wegzeit, **Nachfrage beim Gehen** während der Arbeit (siehe [So stempelt der Assistent](#so-stempelt-der-assistent)) |
+| **Benachrichtigungen** | Geräte mit der Companion App (Android und iOS), Bestätigungen nach jeder Stempelung, **Live-Anzeige** (iOS Live Activity / Android Live Update) mit laufender Uhr, Fortschritt bis zur Soll-Arbeitszeit und voraussichtlichem Feierabend. Eingeklappt: Symbole |
+| **Pausen & Erinnerungen** | Pausenerinnerung nach X Stunden ohne Pause, Benachrichtigung am Pausenende oder automatisch weiterarbeiten. **Pause nachtragen:** Fehlt beim Ausstempeln die Pause nach Arbeitszeitgesetz, fragt eine Benachrichtigung, wie lang sie war (*15 / 30 / 45 min* oder *Keine Pause*); ohne Antwort nach 60 min wird der Standardwert (30 min) eingetragen. **Feierabend-Erinnerung** (Arbeitsbeginn + Soll + Pflichtpause + Karenzzeit), Höchstarbeitszeit, tägliche Erinnerung zu einer Uhrzeit, **vergessenes Ausstempeln** am nächsten Morgen mit der Uhrzeit, zu der du gegangen bist |
+| **Erweitert** | Optional **Ort am Stempel**: „Büro“ bzw. „Homeoffice“ (Texte anpassbar) wird bei jeder Stempelung über Home Assistant mitgesendet und ist in Crewmeister auch für den Arbeitgeber sichtbar; wahlweise *als Notiz* für Konten, die den Ort nicht setzen dürfen. Abfrageintervall, Standardnotiz, Zeitkonto-ID |
 
-Hinweise zur Anwesenheitserkennung:
+#### So stempelt der Assistent
+
+Büro und Homeoffice liefern nur „am Arbeitsplatz: ja / nein / keine Aussage“. Daraus macht eine gespeicherte Zustandsmaschine *Kommen* und *Gehen*, sobald die Bestätigungszeit abgelaufen ist. Gestempelt wird trotzdem der ursprüngliche Zeitpunkt T.
+
+| Ereignis | Aktion |
+|---|---|
+| **Kommen**, ausgestempelt | Einstempeln mit **T + Wegzeit** (z. B. Parkplatz → Schreibtisch), nur an Arbeitstagen, ohne Urlaub, im Zeitfenster. Wer vor Fensterbeginn kommt, wird zum Fensterbeginn eingestempelt |
+| **Kommen**, in der Pause | Weiterarbeiten mit T + Wegzeit |
+| **Gehen** im **Pausenzeitraum** (z. B. 11:30–13:30) | Pause starten, beim Zurückkommen weiterarbeiten |
+| **Gehen** im **Feierabend-Zeitraum** | Ausstempeln mit **T − Wegzeit**. Der Zeitraum beginnt ab einer Uhrzeit und/oder sobald die Soll-Arbeitszeit erreicht ist (die frühere Zeit gilt) |
+| **Gehen** zu anderen Zeiten | **Nie ausstempeln.** Optional fragt eine Benachrichtigung mit *Pause* / *Ausstempeln*; ohne Antwort verfällt sie nach 30 min und es passiert nichts |
+| Vorher gegangen und zu Beginn des Feierabend-Zeitraums noch weg | **Nachholen** (Standard an): Ausstempeln zum Zeitpunkt des Gehens, z. B. nach einem Arzttermin ohne Rückkehr |
+
+Die Wegzeiten gelten nur fürs Büro. Ein Stempel liegt nie vor dem letzten Stempel und nie in der Zukunft; bei Wegzeit wird deshalb erst zum Zeitpunkt T + Wegzeit gestempelt.
+
+Schutzregeln für Verlässlichkeit:
+
+- **„Keine Aussage“ zählt nie als Gehen.** Verliert die Companion App kurz die Verbindung oder startet Home Assistant neu (`unknown`/`unavailable`), bleibt der letzte Zustand.
+- **Abgleich beim Start:** Wer während eines Neustarts ankommt oder geht, wird danach mit dem Zeitpunkt der Änderung erkannt. Beim ersten Einrichten wird nicht gestempelt.
+- **Warteschlange:** Ist Crewmeister nicht erreichbar, wird der Stempel mit dem ursprünglichen Zeitpunkt gespeichert und wiederholt (1, 2, 5, 10, 30 min, danach stündlich bis 24 h). Ab dem dritten Fehlversuch kommt eine Benachrichtigung.
+- Vor jedem Stempel wird der Status frisch geholt. Wurde schon am Terminal oder in der App gestempelt, wird nichts doppelt gesendet.
+- **Nach dem Ausstempeln nur noch Nachfrage:** Wurde heute schon ausgestempelt (egal wie), stempelt ein späteres Kommen am selben Tag nicht automatisch ein, sondern fragt nach. Das verhindert z. B. ein Einstempeln, wenn abends der PC zu Hause läuft.
+- Bist du im Büro erkannt, beendet der PC zu Hause nichts.
+- Nachfrage-Knöpfe verfallen; veraltete Knöpfe werden abgelehnt.
+
+Der Sensor **„Automatik“** zeigt die letzte Entscheidung mit Grund (z. B. *Wartet auf Wegzeit*, *Urlaub / Abwesenheit*), dazu Stempelzeit, Ergebnis und die Zahl der Stempel in der Warteschlange. Der Sensor **„Arbeitsort“** zeigt in den Attributen, was jede Quelle gerade meldet. Damit findest du schnell heraus, warum gestempelt wurde oder warum nicht.
+
+Hinweise zur Erkennung:
 
 - Eine Zone zählt, wenn die gewählte Person laut Zone darin ist (Attribut `persons`).
-- Der WLAN-Sensor der Companion App (`sensor.<gerät>_wifi_connection`) ist meist zuverlässiger als GPS.
-- Ist die Zeit zwischen Gehen und Wiederkommen kürzer als die Verzögerung beim Gehen, passiert nichts. Mit „Kurze Abwesenheit als Pause“ wird eine Abwesenheit bis zu dieser Dauer rückwirkend als Pause gestempelt, eine längere als Ausstempeln zum Zeitpunkt des Gehens.
-- Veraltete Knöpfe (z. B. eine alte Ausstempel-Nachfrage, nachdem schon neu gestempelt wurde) werden abgelehnt.
-
-Hinweise zum Homeoffice:
-
-- Die Person muss zu Hause sein (`home`), und es muss ein Arbeitstag im eingestellten Zeitfenster sein (Standard 06:00–19:00). Abends oder am Wochenende am PC zählt nicht.
-- Die Leistungsschwelle muss über dem Standby-Verbrauch von PC/Monitor liegen. Läuft der PC über Nacht mit hoher Leistung, beginnt am nächsten Arbeitstag zum Fensterbeginn eine Sitzung.
-- Ist am selben Tag schon automatisch eingestempelt worden (z. B. vor einem langen Mittag), fragt der Assistent beim nächsten Arbeitsbeginn nach, statt erneut automatisch einzustempeln. Das gilt auch fürs Büro.
+- Der WLAN-Sensor der Companion App (`sensor.<gerät>_wifi_connection`) erkennt das Ankommen meist schneller als GPS. Mit *Eine Quelle reicht* und Zone + WLAN gilt Gehen erst, wenn beide „weg“ melden; WLAN-Abbrüche im Energiesparmodus stören dann nicht. Reicht das Büro-WLAN bis auf den Parkplatz, *Alle müssen zutreffen* wählen.
+- Homeoffice: Die Leistungsschwelle muss über dem Standby-Verbrauch von PC/Monitor liegen. Abends oder am Wochenende am PC stempelt nicht ein (Zeitfenster, Arbeitstage, Nachfrage nach dem Ausstempeln).
+- NFC-Tags stempeln nicht mehr direkt. Als Ersatz eine Automation mit Auslöser *Tag gescannt* anlegen, die den Button **Nächster Schritt** drückt.
 
 Hinweise zur Live-Anzeige:
 
@@ -56,7 +78,6 @@ Hinweise zur Live-Anzeige:
 
 - **Dienst** `crewmeister.create_stamp`, um Stempelungen inkl. optionaler Notiz, Ort oder Zeitpunkt automatisiert zu erstellen.
 - **Dienst** `crewmeister.show_live`, um die Live-Anzeige wieder anzuzeigen.
-- **Integration-Optionen** für Abfrageintervall, Filterung nach Abwesenheitsstatus, Standardnotiz sowie `time_account_id` für Stempelungen.
 - **Mehrbenutzer-Support**: Die Crewmeister-Benutzer-ID dient als eindeutige ID, sodass mehrere Konten parallel eingerichtet werden können.
 - **Diagnose-Download** (Zugangsdaten werden geschwärzt) für Fehlerberichte.
 
@@ -113,6 +134,18 @@ Alternative Installation über HACS
 3. Gib die URL dieses Repositories an und wähle den Typ **Integration**.
 4. Installiere „Crewmeister“ und starte Home Assistant neu.
 
+## Update von 0.4 / 0.5 auf 1.0
+
+Die Einstellungen werden beim ersten Start automatisch übernommen, die Entitäts-IDs bleiben gleich. Bitte danach einmal die **Stempelregeln** prüfen:
+
+- *Beim Gehen* (0.x) wird zu *Gehen im Feierabend-Zeitraum*. Ohne Uhrzeit beginnt der Feierabend-Zeitraum mit erreichter Soll-Arbeitszeit. Vorher wird beim Gehen **nicht mehr ausgestempelt**, auch nicht nach langer Abwesenheit (außer per *Nachholen*).
+- Hatten Büro und Homeoffice verschiedene Modi, gilt jetzt *Nachfragen*.
+- *Beim Verlassen erinnern* wird zu *Nachfragen* bei „Gehen während der Arbeit“ (nur mit Büro-Erkennung).
+- Die automatische Mittagspause wird zum **Pausenzeitraum** (Beginn = Mittagspause, Ende = Erinnerung ans Weiterarbeiten oder Beginn + Pausendauer) mit „Pause automatisch zu Beginn starten“.
+- Entfallen: NFC-Tags, Soll-Arbeitszeit pro Wochentag, „Nur einmal am Tag“, „Rückdatieren“ (jetzt immer), „Kurze Abwesenheit als Pause“, Homeoffice-Zeitfenster und -Kurzpause, die dauerhafte Android-Statusanzeige (ersetzt durch die Live-Anzeige).
+
+Ein Zurück auf 0.x übernimmt die neuen Einstellungen nicht.
+
 ## Einrichtung
 
 1. Navigiere zu **Einstellungen → Geräte & Dienste → Integration hinzufügen**.
@@ -141,12 +174,13 @@ Optional lassen sich `timestamp`, `location` und `time_account_id` angeben (übe
 - Abwesenheitstypen werden über die Crewmeister-API aufgelöst, sodass der Kalender sprechende Namen zeigt.
 - Für eine zuverlässige Funktion muss der Crewmeister-Benutzer über die benötigten API-Berechtigungen verfügen.
 - Nachtschichten werden vom Assistenten nicht unterstützt: Hat die Schicht vor Mitternacht begonnen, entfallen Feierabend-Erinnerung, Höchstarbeitszeit, Pausenerinnerung und Pausenende. Morgens greift dann die Prüfung auf vergessenes Ausstempeln.
+- Der Assistent prüft minütlich. Ein Stempel mit Wegzeit oder aus der Warteschlange kann deshalb bis zu eine Minute später gesendet werden; der gestempelte Zeitpunkt stimmt trotzdem.
 
 ## Sicherheit
 
 - Die Verbindung zu Crewmeister muss HTTPS verwenden; eine `http://`-Adresse wird abgelehnt. Weiterleitungen der API werden nicht befolgt.
 - Das Passwort liegt – wie bei allen Home-Assistant-Integrationen mit Benutzername/Passwort – unverschlüsselt in `.storage/core.config_entries`. Backups von Home Assistant enthalten es ebenfalls.
-- Antwortknöpfe und NFC-Tags werden nur von der eingestellten Person und den Besitzern der ausgewählten Benachrichtigungs-Geräte akzeptiert. Andere Home-Assistant-Benutzer können darüber nicht für dich stempeln. Ist weder eine Person noch ein Benachrichtigungs-Gerät eingestellt, darf jeder Home-Assistant-Benutzer per NFC stempeln.
+- Antwortknöpfe werden nur von der eingestellten Person und den Besitzern der ausgewählten Benachrichtigungs-Geräte akzeptiert. Andere Home-Assistant-Benutzer können darüber nicht für dich stempeln.
 - Rückdatierte Knöpfe sind nur gültig, wenn der Zeitpunkt höchstens drei Tage zurück und nicht in der Zukunft liegt; nachgetragene Pausen sind auf 2 Stunden und eigene Stempel begrenzt.
 - Buttons und der Dienst `crewmeister.create_stamp` können – wie bei Home Assistant üblich – von jedem angemeldeten Home-Assistant-Benutzer ausgelöst werden.
 
@@ -172,6 +206,6 @@ python3 -m venv .venv
 .venv/bin/pytest
 ```
 
-Die OpenAPI-Beschreibungen der Crewmeister-API liegen unter [`docs/api/`](docs/api/), der Ausbauplan unter [`docs/PLAN.md`](docs/PLAN.md).
+Die OpenAPI-Beschreibungen der Crewmeister-API liegen unter [`docs/api/`](docs/api/), die Pläne unter [`docs/PLAN.md`](docs/PLAN.md) (0.4) und [`docs/PLAN_V2.md`](docs/PLAN_V2.md) (1.0).
 
 Viel Spaß beim Automatisieren deiner Arbeitszeiterfassung!

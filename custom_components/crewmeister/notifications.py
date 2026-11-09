@@ -69,6 +69,7 @@ class Action(StrEnum):
     SNOOZE = "SNOOZE"
     IGNORE = "IGNORE"
     ADD_BREAK = "ADD_BREAK"
+    NO_BREAK = "NO_BREAK"
 
 
 class Kind(StrEnum):

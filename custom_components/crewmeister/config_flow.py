@@ -116,7 +116,7 @@ def _entry_data(
 class CrewmeisterConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Crewmeister."""
 
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Ask for the API URL and credentials."""

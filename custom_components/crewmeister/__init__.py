@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError
@@ -28,7 +30,10 @@ from .coordinator import (
 )
 from .helpers import stamp_defaults
 from .logic.config import AssistantConfig
+from .logic.migration import migrate_options_v1
 from .services import async_setup_services
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -87,6 +92,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: CrewmeisterConfigEntry) 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await assistant.async_start()
     entry.async_on_unload(assistant.async_stop)
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: CrewmeisterConfigEntry) -> bool:
+    """Migrate the options of older versions."""
+
+    if entry.version > 2:
+        # Downgrade from a future version
+        return False
+    if entry.version == 1:
+        _LOGGER.info("Migrating Crewmeister options of %s to version 2", entry.title)
+        hass.config_entries.async_update_entry(
+            entry, options=migrate_options_v1(entry.options), version=2
+        )
     return True
 
 

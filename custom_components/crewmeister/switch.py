@@ -23,7 +23,7 @@ async def async_setup_entry(
     """Set up the switch if presence or home office detection is configured."""
 
     config = entry.runtime_data.config
-    if config.presence_configured or config.home_office_configured:
+    if config.presence_configured:
         async_add_entities(
             [CrewmeisterAutoStampSwitch(entry.runtime_data.status_coordinator, entry, "auto_stamp")]
         )

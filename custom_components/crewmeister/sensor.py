@@ -16,11 +16,13 @@ from .api import WorkStatus
 from .assistant import WORK_LOCATIONS
 from .coordinator import CrewmeisterConfigEntry, CrewmeisterStatusCoordinator
 from .entity import CrewmeisterEntity
+from .logic.rules import Reason
 from .logic.worktime import DaySummary, expected_end, required_break
 
 LIVE_UPDATE_INTERVAL = timedelta(minutes=1)
 
 PARALLEL_UPDATES = 0
+NO_DECISION = "none"
 
 
 async def async_setup_entry(
@@ -40,8 +42,13 @@ async def async_setup_entry(
         ]
     )
     config = entry.runtime_data.config
-    if config.presence_configured or config.home_office_configured:
-        async_add_entities([CrewmeisterWorkLocationSensor(coordinator, entry, "work_location")])
+    if config.presence_configured:
+        async_add_entities(
+            [
+                CrewmeisterWorkLocationSensor(coordinator, entry, "work_location"),
+                CrewmeisterAutomationSensor(coordinator, entry, "automation"),
+            ]
+        )
 
 
 class CrewmeisterStatusSensor(CrewmeisterEntity[CrewmeisterStatusCoordinator], SensorEntity):
@@ -184,4 +191,51 @@ class CrewmeisterWorkLocationSensor(CrewmeisterEntity[CrewmeisterStatusCoordinat
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         since = self._assistant.work_location_since
-        return {"since": since.isoformat() if since else None}
+        presence = self._assistant.state.presence
+        return {
+            "since": since.isoformat() if since else None,
+            "phase": presence.phase.value if presence.phase else None,
+            # What every source reports, helps to find unreliable sources
+            "sources": {key: value.value for key, value in self._assistant.auto.readings().items()},
+        }
+
+
+class CrewmeisterAutomationSensor(CrewmeisterEntity[CrewmeisterStatusCoordinator], SensorEntity):
+    """Last decision of the automatic stamping and why it was made."""
+
+    _attr_translation_key = "automation"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [NO_DECISION, *(reason.value for reason in Reason)]
+
+    def __init__(
+        self, coordinator: CrewmeisterStatusCoordinator, entry: CrewmeisterConfigEntry, key: str
+    ) -> None:
+        super().__init__(coordinator, entry, key)
+        self._assistant = entry.runtime_data.assistant
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(self._assistant.async_add_listener(self.async_write_ha_state))
+
+    @property
+    def available(self) -> bool:
+        return True
+
+    @property
+    def native_value(self) -> str:
+        reason = self._assistant.state.decision.get("reason")
+        return reason if reason in self.options else NO_DECISION
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        decision = self._assistant.state.decision
+        return {
+            "time": decision.get("time"),
+            "outcome": decision.get("outcome"),
+            "stamp_type": decision.get("stamp_type"),
+            "stamp_time": decision.get("stamp_at"),
+            "location": decision.get("location"),
+            "result": decision.get("result"),
+            "queued_stamps": len(self._assistant.state.queue),
+            "enabled": self._assistant.enabled,
+        }

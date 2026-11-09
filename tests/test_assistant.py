@@ -136,34 +136,6 @@ def test_payload_for_android_and_ios() -> None:
 # ------------------------------------------------------------------- presence
 
 
-async def test_auto_clock_in_on_arrival(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    clocked_out: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    await setup(hass, mock_config_entry, {**PRESENCE_OPTIONS, "clock_in_mode": "auto"})
-    assert hass.states.get("switch.max_muster_automatic_stamping").state == "on"
-
-    await move(hass, True)
-    await advance(hass, freezer, timedelta(minutes=1))
-    assert stamps(clocked_out)[-1][0] == "CLOCK_OUT"
-
-    await advance(hass, freezer, timedelta(minutes=1, seconds=1))
-    # Backdated to the moment of arrival
-    assert stamps(clocked_out)[-1] == ("START_WORK", NOW)
-    assert notifications[-1].data["message"] == "Clocked in at 10:00"
-
-    # Only once per day
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=1))
-    await move(hass, True)
-    await advance(hass, freezer, timedelta(minutes=3))
-    assert len(clocked_out.stamps) == 3
-
-
 async def test_arrival_jitter_is_ignored(
     hass: HomeAssistant,
     mock_client: AsyncMock,
@@ -280,146 +252,6 @@ async def test_actions_of_other_entries_are_ignored(
     assert stamps(clocked_out)[-1][0] == "CLOCK_OUT"
 
 
-async def test_auto_clock_out_backdated(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    await setup(
-        hass, mock_config_entry, {**PRESENCE_OPTIONS, "clock_out_mode": "auto"}, at_work=True
-    )
-
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=4))
-    assert stamps(backend)[-1][0] == "START_WORK"
-
-    await advance(hass, freezer, timedelta(minutes=1, seconds=1))
-    assert stamps(backend)[-1] == ("CLOCK_OUT", NOW)
-    assert notifications[-1].data["message"].startswith("Clocked out at 10:00 – 2:00 h today")
-
-
-async def test_auto_clock_out_without_backdating(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    await setup(
-        hass,
-        mock_config_entry,
-        {**PRESENCE_OPTIONS, "clock_out_mode": "auto", "backdate": False},
-        at_work=True,
-    )
-
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=5, seconds=1))
-
-    assert stamps(backend)[-1][0] == "CLOCK_OUT"
-    assert stamps(backend)[-1][1] > NOW + timedelta(minutes=5)
-
-
-async def test_pending_departure_survives_reload(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    await setup(
-        hass, mock_config_entry, {**PRESENCE_OPTIONS, "clock_out_mode": "auto"}, at_work=True
-    )
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=2))
-
-    await hass.config_entries.async_reload(mock_config_entry.entry_id)
-    await hass.async_block_till_done()
-    await advance(hass, freezer, timedelta(minutes=4))
-
-    assert stamps(backend)[-1] == ("CLOCK_OUT", NOW)
-
-
-async def test_short_absence_becomes_break(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    options = {**PRESENCE_OPTIONS, "clock_out_mode": "auto", "short_leave_break": 60}
-    await setup(hass, mock_config_entry, options, at_work=True)
-
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=20))
-    await move(hass, True)
-
-    assert stamps(backend)[-2:] == [
-        ("START_BREAK", NOW),
-        ("START_WORK", NOW + timedelta(minutes=20)),
-    ]
-    assert notifications[-1].data["message"] == "Stamped a break from 10:00 to 10:20."
-
-    # A long absence is a clock out at the time of leaving
-    await advance(hass, freezer, timedelta(minutes=10))
-    left = dt_util.utcnow()
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=61))
-    assert stamps(backend)[-1] == ("CLOCK_OUT", left)
-
-
-async def test_ask_on_departure(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    await setup(
-        hass, mock_config_entry, {**PRESENCE_OPTIONS, "clock_out_mode": "ask"}, at_work=True
-    )
-
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=6))
-
-    call = notifications[-1]
-    assert call.data["title"] == "Left work"
-    assert [a.split(":")[2] for a in actions(call)] == ["CLOCK_OUT", "START_BREAK", "IGNORE"]
-    await press(hass, actions(call)[1])
-    assert stamps(backend)[-1] == ("START_BREAK", NOW)
-
-
-async def test_leave_reminder_and_snooze(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    await setup(hass, mock_config_entry, {**PRESENCE_OPTIONS, "snooze_minutes": 30}, at_work=True)
-
-    await move(hass, False)
-    await advance(hass, freezer, timedelta(minutes=6))
-    reminder = notifications[-1]
-    assert reminder.data["title"] == "Left work"
-    assert [a.split(":")[2] for a in actions(reminder)] == ["CLOCK_OUT", "SNOOZE"]
-
-    await press(hass, actions(reminder)[1])
-    count = len(notifications)
-    await advance(hass, freezer, timedelta(minutes=29))
-    assert len(notifications) == count
-    await advance(hass, freezer, timedelta(minutes=2))
-    assert notifications[-1].data["title"] == "Still clocked in"
-
-    await press(hass, actions(reminder)[0])
-    assert stamps(backend)[-1] == ("CLOCK_OUT", NOW)
-
-
 async def test_outdated_action_is_rejected(
     hass: HomeAssistant,
     mock_client: AsyncMock,
@@ -435,27 +267,6 @@ async def test_outdated_action_is_rejected(
     assert stamps(backend)[-1][0] == "START_WORK"
     assert notifications[-1].data["title"] == "Stamping failed"
     assert "outdated" in notifications[-1].data["message"]
-
-
-async def test_nfc_tag_toggles(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-) -> None:
-    await setup(hass, mock_config_entry, {"nfc_tags": ["desk-tag"]})
-
-    hass.bus.async_fire("tag_scanned", {"tag_id": "other"})
-    await hass.async_block_till_done()
-    assert stamps(backend)[-1][0] == "START_WORK"
-
-    hass.bus.async_fire("tag_scanned", {"tag_id": "desk-tag"})
-    await hass.async_block_till_done()
-    assert stamps(backend)[-1][0] == "CLOCK_OUT"
-
-    hass.bus.async_fire("tag_scanned", {"tag_id": "desk-tag"})
-    await hass.async_block_till_done()
-    assert stamps(backend)[-1][0] == "START_WORK"
 
 
 async def test_wifi_presence(
@@ -553,38 +364,6 @@ async def test_forgotten_clock_out(
     assert stamps(backend)[-1] == ("CLOCK_OUT", yesterday_8 + timedelta(hours=8, minutes=30))
 
 
-async def test_forgotten_clock_out_uses_departure(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    backend = FakeBackend()
-    mock_client.async_get_recent_stamps.side_effect = backend.recent
-    mock_client.async_create_stamp.side_effect = backend.create
-    freezer.move_to(NOW - timedelta(hours=26))  # yesterday 08:00
-    backend.add("START_WORK", dt_util.utcnow())
-    await setup(
-        hass,
-        mock_config_entry,
-        {**PRESENCE_OPTIONS, "remind_on_leave": False, "forgotten_check_time": "07:00:00"},
-        at_work=True,
-    )
-    await advance(hass, freezer, timedelta(hours=9))  # leaves at 17:00
-    await move(hass, False)
-    left = dt_util.utcnow()
-
-    freezer.move_to(datetime(2026, 10, 19, 7, 0, tzinfo=dt_util.get_default_time_zone()))
-    async_fire_time_changed(hass)
-    await hass.async_block_till_done()
-
-    call = notifications[-1]
-    assert "left work at 18.10. 17:00" in call.data["message"]
-    await press(hass, actions(call)[0])
-    assert stamps(backend)[-1] == ("CLOCK_OUT", left)
-
-
 # ---------------------------------------------------------------------- breaks
 
 
@@ -648,108 +427,6 @@ async def test_auto_resume_after_break(
     assert stamps(backend)[-1][0] == "START_WORK"
 
 
-async def test_lunch_break(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    await setup(hass, mock_config_entry, {"lunch_break_time": "10:10:00"})
-
-    await advance(hass, freezer, timedelta(minutes=10))
-
-    assert stamps(backend)[-1] == ("START_BREAK", NOW + timedelta(minutes=10))
-
-
-async def test_missing_break_after_clock_out(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-) -> None:
-    backend = FakeBackend()
-    backend.add("START_WORK", NOW - timedelta(hours=7))
-    backend.add("START_BREAK", NOW - timedelta(hours=4))
-    backend.add("START_WORK", NOW - timedelta(hours=4) + timedelta(minutes=20))
-    mock_client.async_get_recent_stamps.side_effect = backend.recent
-    mock_client.async_create_stamp.side_effect = backend.create
-    mock_client.async_set_break.side_effect = backend.set_break
-    await setup(hass, mock_config_entry, {"notify_targets": [PHONE]})
-
-    await hass.services.async_call(
-        "button", "press", {"entity_id": "button.max_muster_clock_out"}, blocking=True
-    )
-    await hass.async_block_till_done()
-
-    call = notifications[-1]
-    assert call.data["title"] == "Break too short"
-    assert call.data["message"] == (
-        "6:40 h of work require a 0:30 h break, you took 0:20 h "
-        "(only breaks of 15 min or more count)."
-    )
-    clock_out_id = backend.stamps[-1].id
-    assert actions(call) == [
-        f"crewmeister:{mock_config_entry.entry_id}:ADD_BREAK:10-{clock_out_id}"
-    ]
-
-    await press(hass, actions(call)[0])
-    assert backend.breaks == [(clock_out_id, timedelta(minutes=10))]
-    assert notifications[-1].data["message"] == "Added a 10 min break"
-
-    # A second tap (e.g. on the watch) must not add the break again
-    await press(hass, actions(call)[0])
-    assert backend.breaks == [(clock_out_id, timedelta(minutes=10))]
-
-
-async def test_short_breaks_do_not_count(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-) -> None:
-    backend = FakeBackend()
-    backend.add("START_WORK", NOW - timedelta(hours=7))
-    backend.add("START_BREAK", NOW - timedelta(hours=4))
-    backend.add("START_WORK", NOW - timedelta(hours=4) + timedelta(minutes=10))
-    mock_client.async_get_recent_stamps.side_effect = backend.recent
-    mock_client.async_create_stamp.side_effect = backend.create
-    await setup(hass, mock_config_entry, {"notify_targets": [PHONE]})
-
-    await hass.services.async_call(
-        "button", "press", {"entity_id": "button.max_muster_clock_out"}, blocking=True
-    )
-    await hass.async_block_till_done()
-
-    clock_out_id = backend.stamps[-1].id
-    assert actions(notifications[-1]) == [
-        f"crewmeister:{mock_config_entry.entry_id}:ADD_BREAK:30-{clock_out_id}"
-    ]
-
-
-async def test_status_notification(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-) -> None:
-    await setup(hass, mock_config_entry, {"notify_targets": [PHONE], "notify_status": True})
-
-    status = notifications[-1].data
-    assert status["message"] == "Clocked in since 08:00"
-    assert status["data"]["chronometer"] is True
-    assert status["data"]["when"] == int((NOW - timedelta(hours=2)).timestamp())
-    assert status["data"]["tag"] == f"crewmeister_{mock_config_entry.entry_id}_status"
-
-    await hass.services.async_call(
-        "button", "press", {"entity_id": "button.max_muster_clock_out"}, blocking=True
-    )
-    await hass.async_block_till_done()
-    cleared = [c for c in notifications if c.data["message"] == "clear_notification"]
-    assert cleared[-1].data["data"]["tag"] == f"crewmeister_{mock_config_entry.entry_id}_status"
-
-
 async def test_german_texts(
     hass: HomeAssistant,
     mock_client: AsyncMock,
@@ -804,7 +481,7 @@ async def test_end_of_day_reminder(
     assert titles(notifications).count("Time to go home?") == 1
 
 
-async def test_end_of_day_counts_taken_breaks_and_weekday_hours(
+async def test_end_of_day_counts_taken_breaks(
     hass: HomeAssistant,
     mock_client: AsyncMock,
     backend: FakeBackend,
@@ -812,7 +489,7 @@ async def test_end_of_day_counts_taken_breaks_and_weekday_hours(
     notifications: list[ServiceCall],
     freezer: FrozenDateTimeFactory,
 ) -> None:
-    # 45 min break taken, Monday target 7 h -> 08:00 + 7 h + 45 min = 15:45
+    # 45 min break taken, target 7 h -> 08:00 + 7 h + 45 min = 15:45
     backend.add("START_BREAK", NOW - timedelta(minutes=60))
     backend.add("START_WORK", NOW - timedelta(minutes=15))
     await setup(
@@ -822,7 +499,7 @@ async def test_end_of_day_counts_taken_breaks_and_weekday_hours(
             "notify_targets": [PHONE],
             "end_of_day_reminder": True,
             "end_of_day_grace": 0,
-            "hours_mon": 7,
+            "daily_hours": 7,
             "break_reminder_after": 0,
             "max_work_hours": 0,
         },
@@ -848,7 +525,7 @@ async def test_no_end_of_day_reminder_without_target(
     await setup(
         hass,
         mock_config_entry,
-        {"notify_targets": [PHONE], "end_of_day_reminder": True, "hours_mon": 0},
+        {"notify_targets": [PHONE], "end_of_day_reminder": True, "daily_hours": 0},
     )
 
     await advance(hass, freezer, timedelta(hours=10))
@@ -977,24 +654,6 @@ async def test_actions_from_other_users_are_ignored(
     assert stamps(clocked_out)[-1][0] == "START_WORK"
 
 
-async def test_nfc_only_for_the_configured_person(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-) -> None:
-    await setup(hass, mock_config_entry, {"person": PERSON, "nfc_tags": ["desk-tag"]})
-    hass.states.async_set(PERSON, "Büro", {"user_id": "owner"})
-
-    hass.bus.async_fire("tag_scanned", {"tag_id": "desk-tag"}, context=Context(user_id="guest"))
-    await hass.async_block_till_done()
-    assert stamps(backend)[-1][0] == "START_WORK"
-
-    hass.bus.async_fire("tag_scanned", {"tag_id": "desk-tag"}, context=Context(user_id="owner"))
-    await hass.async_block_till_done()
-    assert stamps(backend)[-1][0] == "CLOCK_OUT"
-
-
 @pytest.mark.parametrize("offset", [timedelta(hours=1), timedelta(days=-4)])
 async def test_action_times_out_of_range_are_rejected(
     hass: HomeAssistant,
@@ -1077,19 +736,6 @@ async def test_forgotten_clock_out_offers_no_future_time(
     assert actions(call) == [f"crewmeister:{mock_config_entry.entry_id}:CLOCK_OUT"]
 
 
-async def test_nfc_without_person_or_device_allows_all_users(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-) -> None:
-    await setup(hass, mock_config_entry, {"nfc_tags": ["desk-tag"]})
-
-    hass.bus.async_fire("tag_scanned", {"tag_id": "desk-tag"}, context=Context(user_id="anyone"))
-    await hass.async_block_till_done()
-    assert stamps(backend)[-1][0] == "CLOCK_OUT"
-
-
 async def test_pending_arrival_survives_reload(
     hass: HomeAssistant,
     mock_client: AsyncMock,
@@ -1156,35 +802,6 @@ async def test_live_display_custom_icons(
     )
     await hass.async_block_till_done()
     assert live_calls(notifications)[-1].data["data"]["notification_icon"] == "mdi:pretzel"
-
-
-async def test_resume_reminder_at_fixed_time(
-    hass: HomeAssistant,
-    mock_client: AsyncMock,
-    backend: FakeBackend,
-    mock_config_entry: MockConfigEntry,
-    notifications: list[ServiceCall],
-    freezer: FrozenDateTimeFactory,
-) -> None:
-    backend.add("START_BREAK", NOW - timedelta(minutes=20))
-    await setup(
-        hass,
-        mock_config_entry,
-        {
-            "notify_targets": [PHONE],
-            "resume_reminder_time": "10:10:00",
-            "break_end_reminder": False,
-        },
-    )
-
-    await advance(hass, freezer, timedelta(minutes=10))
-
-    call = notifications[-1]
-    assert call.data["title"] == "Back to work?"
-    assert call.data["message"] == "You have been on a break since 09:40 (0:30 h)."
-    assert actions(call) == [f"crewmeister:{mock_config_entry.entry_id}:RESUME"]
-    await press(hass, actions(call)[0])
-    assert stamps(backend)[-1] == ("START_WORK", NOW + timedelta(minutes=10))
 
 
 async def test_no_resume_reminder_while_working(

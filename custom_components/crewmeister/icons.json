@@ -42,6 +42,9 @@
           "home_office": "mdi:home-account",
           "none": "mdi:home-off-outline"
         }
+      },
+      "automation": {
+        "default": "mdi:robot-outline"
       }
     },
     "binary_sensor": {

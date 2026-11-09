@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
@@ -12,13 +12,15 @@ from homeassistant.helpers.event import async_track_state_change_event, async_tr
 from homeassistant.util import dt as dt_util
 
 from .api import WorkStatus
-from .assistant import no_work_reason_for
 from .coordinator import (
     CrewmeisterAbsenceCoordinator,
     CrewmeisterConfigEntry,
     CrewmeisterStatusCoordinator,
 )
 from .entity import CrewmeisterEntity
+
+if TYPE_CHECKING:
+    from .assistant import CrewmeisterAssistant
 
 PARALLEL_UPDATES = 0
 
@@ -109,6 +111,11 @@ class CrewmeisterWorkdayBinarySensor(_DailyAbsenceSensor):
                     self.hass, workday_entity, self._async_workday_changed
                 )
             )
+        self.async_on_remove(
+            self.coordinator.config_entry.runtime_data.assistant.async_add_listener(
+                self.async_write_ha_state
+            )
+        )
 
     @callback
     def _async_workday_changed(self, _event: Event[EventStateChangedData]) -> None:
@@ -120,13 +127,8 @@ class CrewmeisterWorkdayBinarySensor(_DailyAbsenceSensor):
         return True
 
     def _reason(self) -> str | None:
-        reason = no_work_reason_for(
-            self.hass,
-            self.coordinator.config_entry.runtime_data.config,
-            [entry.absence for entry in self.coordinator.current()],
-            dt_util.now().date(),
-        )
-        return reason.value if reason else None
+        assistant = self.coordinator.config_entry.runtime_data.assistant
+        return assistant.no_work_reason(dt_util.now().date())
 
     @property
     def is_on(self) -> bool:
@@ -139,21 +141,46 @@ class CrewmeisterWorkdayBinarySensor(_DailyAbsenceSensor):
 
 
 class CrewmeisterAbsenceBinarySensor(_DailyAbsenceSensor):
-    """On during an absence such as vacation or sickness."""
+    """On during an absence such as vacation or sickness.
+
+    Sources: Crewmeister, and optionally a calendar and a binary sensor.
+    """
 
     _attr_translation_key = "absent"
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(self._assistant.async_add_listener(self.async_write_ha_state))
+
+    @property
+    def _assistant(self) -> CrewmeisterAssistant:
+        return self.coordinator.config_entry.runtime_data.assistant
+
+    @property
+    def available(self) -> bool:
+        # A calendar or sensor still tells about absences without Crewmeister data
+        cfg = self._assistant.config
+        return (
+            self.coordinator.data_is_current()
+            or cfg.absence_calendar is not None
+            or cfg.absence_sensor is not None
+        )
+
     @property
     def is_on(self) -> bool:
-        return self.coordinator.active() is not None
+        return self.coordinator.active() is not None or self._assistant.absence.info() is not None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         entry = self.coordinator.active()
-        if entry is None:
+        if entry is not None:
+            return {
+                "source": "crewmeister",
+                "absence_type": entry.event.summary,
+                "start": entry.event.start.isoformat(),
+                "end": entry.event.end.isoformat(),
+            }
+        info = self._assistant.absence.info()
+        if info is None:
             return None
-        return {
-            "absence_type": entry.event.summary,
-            "start": entry.event.start.isoformat(),
-            "end": entry.event.end.isoformat(),
-        }
+        return {"source": info.source.value, "absence_type": info.title}
