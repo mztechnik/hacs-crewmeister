@@ -16,6 +16,16 @@ Neu aufgebauter Assistent: verlässlicheres automatisches Stempeln und weniger E
 - **Abgleich beim Start:** Kommen und Gehen während eines Neustarts von Home Assistant werden danach erkannt.
 - Sensor **„Automatik“** mit der letzten Entscheidung und ihrem Grund. Der Sensor „Arbeitsort“ zeigt zusätzlich Phase und den Zustand jeder Quelle.
 
+### Behoben seit 1.0.0-beta.1
+- Gehen kurz nach Beginn des Feierabend-Zeitraums stempelte nicht aus, wenn die Stempelzeit durch die Wegzeit vor dem Beginn lag. Begann der Zeitraum, während das Gehen bestätigt wurde, wird jetzt sofort nachgeholt.
+- War Crewmeister beim Gehen nicht erreichbar, wurde der Wiederholungsversuch als Nachholen gewertet; die Pause im Pausenzeitraum und die Nachfrage beim Gehen gingen verloren.
+- Nachholen griff nie, wenn man in der Pause war und der Feierabend-Zeitraum nur über die Soll-Arbeitszeit begann.
+- Die Nachfrage beim Nachholen konnte durch die Ablaufzeit einer früheren Nachfrage entfernt werden.
+- Meldet die Erkennung über Mitternacht durchgehend „da“ (z. B. PC läuft durch), wird am nächsten Tag nur noch nachgefragt statt zum Fensterbeginn eingestempelt.
+- Kann der Urlaubskalender nicht gelesen werden, wartet das Einstempeln, statt den Tag als Arbeitstag zu werten. Die Warnung dazu steht nur noch einmal im Log.
+- „Nach der Pause automatisch weiterarbeiten“ stempelt nicht mehr, solange man weg ist.
+- Wird ein vergessenes Ausstempeln vom Vortag nachgeholt, während man schon da ist, wird das heutige Ankommen danach behandelt; der Tag gilt nicht mehr als „schon ausgestempelt“.
+
 ### Geändert
 - Büro und Homeoffice nutzen dieselbe Erkennung und dieselben Stempelregeln. Getrennte Modi, Zeitfenster und Pausenregeln fürs Homeoffice entfallen.
 - `unknown`/`unavailable` einer Quelle gilt nicht mehr als „weg“. Kurze Verbindungsabbrüche der Companion App oder ein Neustart führen nicht mehr zu falschem Gehen.

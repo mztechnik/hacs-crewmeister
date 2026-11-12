@@ -43,6 +43,7 @@ RETRY_DECISION = timedelta(minutes=1)
 ASK_TEXTS: dict[Reason, tuple[str, str]] = {
     Reason.ARRIVED: ("arrived_title", "arrived_message"),
     Reason.SUPPRESSED: ("arrived_again_title", "arrived_again_message"),
+    Reason.CARRIED_OVER: ("carried_over_title", "carried_over_message"),
     Reason.RETURNED: ("returned_title", "returned_message"),
     Reason.BREAK_WINDOW: ("break_window_title", "break_window_message"),
     Reason.END_OF_DAY: ("end_of_day_left_title", "end_of_day_left_message"),
@@ -201,6 +202,7 @@ class AutoStamper:
         _LOGGER.debug("Presence event: %s", event)
         if event.type == EventType.ARRIVED:
             self._a.state.departure_recheck_at = None
+            self._a.state.departure_retry = False
             self._arrival_recheck = None
             await self._async_clear_question()
             await self._async_arrival()
@@ -233,7 +235,9 @@ class AutoStamper:
             and now >= recheck
         ):
             location = _location(self._a.state.last_location)
-            await self._async_departure(state.left_at, location, catch_up=True)
+            await self._async_departure(
+                state.left_at, location, catch_up=not self._a.state.departure_retry
+            )
         expires = self._a.state.question_expires
         if expires is not None and now >= expires:
             await self._async_clear_question()
@@ -243,11 +247,14 @@ class AutoStamper:
 
         state = self._a.state.presence
         self._a.state.departure_recheck_at = None
+        self._a.state.departure_retry = False
         state.departure_open = False
         data = self._a.status.data
         if state.present and data is not None and data.status == WorkStatus.CLOCKED_OUT:
-            # E.g. a PC left running overnight: today starts with the time window
+            # E.g. a PC left running overnight: nobody arrived, so today only
+            # starts with a question when the time window opens
             state.arrival_open = True
+            state.carried_over = True
             self._arrival_recheck = None
         self._a.save()
 
@@ -260,8 +267,17 @@ class AutoStamper:
             and summary.status == WorkStatus.CLOCKED_OUT
         ):
             state = self._a.state.presence
-            state.suppressed_on = dt_util.now().date()
-            state.arrival_open = False
+            today = dt_util.now().date()
+            latest = summary.latest.timestamp if summary.latest else None
+            if latest is not None and dt_util.as_local(latest).date() < today:
+                # A forgotten shift of an earlier day was ended afterwards; the
+                # arrival of today was skipped because of it, so handle it now
+                if state.present:
+                    state.arrival_open = True
+                    self._arrival_recheck = None
+            else:
+                state.suppressed_on = today
+                state.arrival_open = False
             self._a.save()
 
     # ------------------------------------------------------------------- rules
@@ -300,6 +316,7 @@ class AutoStamper:
             no_work_reason=self._a.no_work_reason(now.date()),
             target_reached_at=dt_util.as_local(end) if end else None,
             suppressed=self._a.state.presence.suppressed(now.date()),
+            carried_over=self._a.state.presence.carried_over,
         )
 
     async def _async_arrival(self) -> None:
@@ -311,6 +328,15 @@ class AutoStamper:
         if summary is None:
             # Do not lose the arrival: decide once Crewmeister answers again
             self._arrival_recheck = now + RETRY_DECISION
+            return
+        if summary.status == WorkStatus.CLOCKED_OUT and not self._a.absence.ready:
+            # Today's vacation is not known yet: do not clock in on a guess
+            self._arrival_recheck = now + RETRY_DECISION
+            if self._a.state.decision.get("reason") != Reason.WAITING_CALENDAR.value:
+                self._record(
+                    Decision(Outcome.WAIT, Reason.WAITING_CALENDAR, StampType.START_WORK),
+                    state.location,
+                )
             return
         # An arrival from an earlier day (e.g. PC running overnight) counts from today
         arrived = max(state.arrived_at, dt_util.start_of_local_day())
@@ -332,9 +358,13 @@ class AutoStamper:
         state = self._a.state.presence
         summary = await self._a.async_fresh_summary()
         if summary is None:
+            # Decide once Crewmeister answers again; a first evaluation stays one
+            if not catch_up:
+                self._a.state.departure_retry = True
             self._a.state.departure_recheck_at = dt_util.utcnow() + RETRY_DECISION
             self._a.save()
             return
+        self._a.state.departure_retry = False
         decision = on_departure(
             self._rules(location),
             self._situation(summary),
@@ -385,7 +415,7 @@ class AutoStamper:
             buttons,
             time_sensitive=departure,
         )
-        if decision.expires is not None:
+        if a.state.question_expires != decision.expires:
             a.state.question_expires = decision.expires
             a.save()
 

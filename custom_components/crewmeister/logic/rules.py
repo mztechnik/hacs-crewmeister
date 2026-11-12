@@ -51,12 +51,14 @@ class Reason(StrEnum):
     WAITING_OFFSET = "waiting_offset"
     WAITING_WINDOW = "waiting_window"
     WAITING_END_OF_DAY = "waiting_end_of_day"
+    WAITING_CALENDAR = "waiting_calendar"
     DISABLED = "disabled"
     MODE_OFF = "mode_off"
     NOT_WORKDAY = "not_workday"
     ABSENT = "absent"
     OUTSIDE_WINDOW = "outside_window"
     SUPPRESSED = "suppressed"
+    CARRIED_OVER = "carried_over"
     ALREADY_CLOCKED_IN = "already_clocked_in"
     ALREADY_CLOCKED_OUT = "already_clocked_out"
     ALREADY_ON_BREAK = "already_on_break"
@@ -126,6 +128,8 @@ class Situation:
     target_reached_at: datetime | None = None
     # The user already clocked out today
     suppressed: bool = False
+    # Present since before midnight without a new arrival (e.g. PC left running)
+    carried_over: bool = False
 
 
 def _at(day: date, at: time, like: datetime) -> datetime:
@@ -146,17 +150,29 @@ def _after_latest(at: datetime, latest: datetime | None) -> datetime:
     return at
 
 
-def end_of_day_start(rules: Rules, situation: Situation) -> datetime | None:
+def end_of_day_start(
+    rules: Rules, situation: Situation, *, catch_up: bool = False
+) -> datetime | None:
     """Return when today's end of day period starts, ``None`` if never.
 
     The earlier of the fixed time and the time the target is reached counts.
+    During a break the target moves on with every minute. For ``catch_up`` it
+    is therefore taken as it was when the break began; otherwise a user who
+    left into a break and did not come back would never be clocked out.
     """
 
     candidates = []
     if rules.end_of_day_time is not None:
         candidates.append(_at(situation.now.date(), rules.end_of_day_time, situation.now))
     if rules.end_of_day_on_target and situation.target_reached_at is not None:
-        candidates.append(situation.target_reached_at)
+        target = situation.target_reached_at
+        if (
+            catch_up
+            and situation.status == WorkStatus.ON_BREAK
+            and situation.latest_stamp_at is not None
+        ):
+            target -= max(ZERO, situation.now - situation.latest_stamp_at)
+        candidates.append(target)
     return min(candidates) if candidates else None
 
 
@@ -222,6 +238,15 @@ def on_arrival(rules: Rules, situation: Situation, arrived_at: datetime) -> Deci
             at,
             choices=(StampType.START_WORK,),
         )
+    if situation.carried_over:
+        # No new arrival today, the sources just never reported "away": only ask
+        return Decision(
+            Outcome.ASK,
+            Reason.CARRIED_OVER,
+            StampType.START_WORK,
+            at,
+            choices=(StampType.START_WORK,),
+        )
     return _with_mode(
         rules.arrival_mode, StampType.START_WORK, at, Reason.ARRIVED, (StampType.START_WORK,)
     )
@@ -243,7 +268,7 @@ def on_departure(
         return Decision(Outcome.SKIP, Reason.ALREADY_CLOCKED_OUT)
 
     at = min(_after_latest(left_at - rules.departure_offset, situation.latest_stamp_at), now)
-    end_of_day = end_of_day_start(rules, situation)
+    end_of_day = end_of_day_start(rules, situation, catch_up=catch_up)
     clocked_in = situation.status == WorkStatus.CLOCKED_IN
     clock_out_choices = (
         (StampType.CLOCK_OUT, StampType.START_BREAK) if clocked_in else (StampType.CLOCK_OUT,)
@@ -258,10 +283,18 @@ def on_departure(
             rules.end_of_day_mode, StampType.CLOCK_OUT, at, Reason.CATCH_UP, clock_out_choices
         )
 
-    if rules.end_of_day_mode != StampMode.OFF and end_of_day is not None and at >= end_of_day:
-        return _with_mode(
-            rules.end_of_day_mode, StampType.CLOCK_OUT, at, Reason.END_OF_DAY, clock_out_choices
-        )
+    if rules.end_of_day_mode != StampMode.OFF and end_of_day is not None:
+        # The departure offset must not move a departure out of the period
+        if at >= end_of_day or left_at >= end_of_day:
+            return _with_mode(
+                rules.end_of_day_mode, StampType.CLOCK_OUT, at, Reason.END_OF_DAY, clock_out_choices
+            )
+        if rules.catch_up and now >= end_of_day:
+            # Left shortly before the period began and it began while the
+            # departure was being confirmed: catch up right away
+            return _with_mode(
+                rules.end_of_day_mode, StampType.CLOCK_OUT, at, Reason.CATCH_UP, clock_out_choices
+            )
 
     # Catch up at the end of the day if the user does not come back
     recheck_at = None

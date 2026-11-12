@@ -69,6 +69,9 @@ class PresenceState:
     # Day on which the user clocked out (manually or automatically); a later
     # arrival on the same day asks instead of clocking in automatically
     suppressed_on: date | None = field(default=None)
+    # Still present at midnight without having clocked in: no new arrival, so
+    # the open arrival of the new day only asks
+    carried_over: bool = False
 
     @property
     def present(self) -> bool:
@@ -92,6 +95,7 @@ class PresenceState:
             "arrival_open": self.arrival_open,
             "departure_open": self.departure_open,
             "suppressed_on": self.suppressed_on.isoformat() if self.suppressed_on else None,
+            "carried_over": self.carried_over,
         }
 
     @classmethod
@@ -108,6 +112,7 @@ class PresenceState:
             arrival_open=bool(data.get("arrival_open")),
             departure_open=bool(data.get("departure_open")),
             suppressed_on=_date(data.get("suppressed_on")),
+            carried_over=bool(data.get("carried_over")),
         )
 
 
@@ -190,6 +195,7 @@ def _present(
     state.phase = Phase.PRESENT
     state.arrival_open = True
     state.departure_open = False
+    state.carried_over = False
     return Update(
         event=PresenceEvent(EventType.ARRIVED, state.arrived_at, state.location), changed=True
     )
@@ -215,6 +221,7 @@ def _away(state: PresenceState, now: datetime, since: datetime, delay: timedelta
     state.location = None
     state.arrival_open = False
     state.departure_open = True
+    state.carried_over = False
     return Update(event=PresenceEvent(EventType.LEFT, state.left_at, location), changed=True)
 
 

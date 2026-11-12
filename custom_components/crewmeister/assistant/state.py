@@ -101,6 +101,9 @@ class AssistantState:
     presence: PresenceState = field(default_factory=PresenceState)
     # Evaluate the last departure again at this time (catch up at end of day)
     departure_recheck_at: datetime | None = None
+    # The recheck repeats a departure that could not be decided (Crewmeister
+    # unreachable) instead of catching up at the end of the day
+    departure_retry: bool = False
     # Time of the last departure, offered when clocking out was forgotten
     left_at: datetime | None = None
     # Where the user worked last ("office" / "home_office"), sent with stamps
@@ -125,6 +128,7 @@ class AssistantState:
             "enabled": self.enabled,
             "presence": self.presence.as_dict(),
             "departure_recheck_at": _iso(self.departure_recheck_at),
+            "departure_retry": self.departure_retry,
             "left_at": _iso(self.left_at),
             "last_location": self.last_location,
             "queue": [item.as_dict() for item in self.queue],
@@ -148,6 +152,7 @@ class AssistantState:
             enabled=bool(data.get("enabled", True)),
             presence=PresenceState.from_dict(data.get("presence")),
             departure_recheck_at=_parse(data.get("departure_recheck_at")),
+            departure_retry=bool(data.get("departure_retry")),
             left_at=_parse(data.get("left_at")),
             last_location=data.get("last_location"),
             queue=[item for item in queue if item is not None],

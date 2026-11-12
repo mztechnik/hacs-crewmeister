@@ -476,7 +476,9 @@
           "already_clocked_in": "Schon eingestempelt",
           "already_clocked_out": "Schon ausgestempelt",
           "already_on_break": "Schon in Pause",
-          "no_rule": "Keine Regel zutreffend"
+          "no_rule": "Keine Regel zutreffend",
+          "waiting_calendar": "Wartet auf Urlaubskalender",
+          "carried_over": "Seit gestern anwesend, nur Nachfrage"
         },
         "state_attributes": {
           "time": {

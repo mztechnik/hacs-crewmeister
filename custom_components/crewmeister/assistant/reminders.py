@@ -12,6 +12,7 @@ from homeassistant.util import dt as dt_util
 
 from ..api import CrewmeisterError, StampType, WorkStatus
 from ..logic.breaks import MAX_ADDED_BREAK, break_choices, clamp_break, missing_break
+from ..logic.presence import Phase
 from ..logic.texts import format_duration
 from ..logic.worktime import DaySummary, required_break, summarize
 from ..notifications import Action, Button, Kind
@@ -132,13 +133,20 @@ class Reminders:
                 [Button(a.t("btn_break"), Action.START_BREAK)],
             )
 
+        # Resuming automatically is only right while at the workplace; who left
+        # for the break resumes when coming back (or with the reminder)
+        away = cfg.presence_configured and a.state.presence.phase in (
+            Phase.AWAY,
+            Phase.ARRIVING,
+        )
+        resume = cfg.auto_resume and not away
         if (
             summary.status == WorkStatus.ON_BREAK
             and summary.current_break >= cfg.break_duration
-            and (cfg.auto_resume or cfg.break_end_reminder)
+            and (resume or cfg.break_end_reminder)
             and a.mark("break_over", since)
         ):
-            if cfg.auto_resume:
+            if resume:
                 await a.async_stamp(StampType.START_WORK, automatic=True)
             else:
                 await a.notifier.async_send(

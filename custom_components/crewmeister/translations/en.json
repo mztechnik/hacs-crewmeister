@@ -476,7 +476,9 @@
           "already_clocked_in": "Already clocked in",
           "already_clocked_out": "Already clocked out",
           "already_on_break": "Already on break",
-          "no_rule": "No rule applies"
+          "no_rule": "No rule applies",
+          "waiting_calendar": "Waiting for vacation calendar",
+          "carried_over": "Present since yesterday, only asked"
         },
         "state_attributes": {
           "time": {

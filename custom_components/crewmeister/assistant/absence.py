@@ -32,6 +32,7 @@ class AbsenceTracker:
         self._calendar_item: CalendarItem | None = None
         self._calendar_day: date | None = None
         self._calendar_loaded_at: datetime | None = None
+        self._calendar_failed = False
 
     async def async_start(self) -> None:
         """Load the calendar and watch the configured entities."""
@@ -51,6 +52,18 @@ class AbsenceTracker:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+
+    @property
+    def ready(self) -> bool:
+        """Return whether today's absences are known.
+
+        False while the configured calendar could not be read for today; then
+        nobody knows whether today is a vacation day.
+        """
+
+        if not self._a.config.absence_calendar:
+            return True
+        return self._calendar_day == dt_util.now().date()
 
     @callback
     def _async_changed(self, event: Event[EventStateChangedData]) -> None:
@@ -99,7 +112,10 @@ class AbsenceTracker:
                 return_response=True,
             )
         except HomeAssistantError as err:
-            _LOGGER.warning("Could not read calendar %s: %s", cfg.absence_calendar, err)
+            # Retried every minute: warn once, not with every attempt
+            if not self._calendar_failed:
+                _LOGGER.warning("Could not read calendar %s: %s", cfg.absence_calendar, err)
+            self._calendar_failed = True
             # Keep today's result; retry with the next refresh
             if self._calendar_day != today:
                 self._calendar_item = None
@@ -111,6 +127,7 @@ class AbsenceTracker:
         )
         self._calendar_day = today
         self._calendar_loaded_at = dt_util.utcnow()
+        self._calendar_failed = False
 
     def info(self) -> AbsenceInfo | None:
         """Return why the user is absent today, ``None`` if not."""

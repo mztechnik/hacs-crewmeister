@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 import pytest
@@ -785,3 +786,285 @@ async def test_forgotten_clock_out_uses_departure(
     assert "left work at 18.10. 17:00" in call.data["message"]
     await press(hass, actions(call)[0])
     assert stamps(backend)[-1] == ("CLOCK_OUT", left)
+
+
+# ------------------------------------------------------- review fixes (beta 2)
+
+
+async def test_offset_does_not_move_departure_before_end_of_day(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    # Leaving right when the period starts; the stamp time lies 5 minutes before
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            **BASE,
+            "end_of_day_mode": "auto",
+            "end_of_day_time": "10:00:00",
+            "end_of_day_on_target": False,
+            "departure_offset": 5,
+        },
+        at_work=True,
+    )
+
+    await move(hass, False)
+    await advance(hass, freezer, 5 * MIN)
+    assert stamps(backend)[-1] == ("CLOCK_OUT", NOW - 5 * MIN)
+    assert decision(mock_config_entry)["reason"] == "end_of_day"
+
+
+async def test_period_starting_during_confirmation_catches_up(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    # Left at 10:00, the period starts at 10:03, the departure is confirmed at 10:05
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            **BASE,
+            "end_of_day_mode": "auto",
+            "end_of_day_time": "10:03:00",
+            "end_of_day_on_target": False,
+        },
+        at_work=True,
+    )
+
+    await move(hass, False)
+    await advance(hass, freezer, 5 * MIN)
+    assert stamps(backend)[-1] == ("CLOCK_OUT", NOW)
+    assert decision(mock_config_entry)["reason"] == "catch_up"
+
+
+async def test_break_is_stamped_after_crewmeister_was_down(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            **BASE,
+            "break_mode": "auto",
+            "break_window_start": "09:30:00",
+            "break_window_end": "11:00:00",
+            "end_of_day_mode": "auto",
+            "end_of_day_time": "15:00:00",
+            "end_of_day_on_target": False,
+        },
+        at_work=True,
+    )
+    mock_client.async_get_recent_stamps.side_effect = CrewmeisterConnectionError("down")
+
+    await move(hass, False)
+    await advance(hass, freezer, 6 * MIN)
+    assert stamps(backend)[-1][0] == "START_WORK"
+
+    # The retry is the first evaluation of the departure, not a catch up
+    mock_client.async_get_recent_stamps.side_effect = backend.recent
+    await advance(hass, freezer, 2 * MIN)
+    assert stamps(backend)[-1] == ("START_BREAK", NOW)
+    assert decision(mock_config_entry)["reason"] == "break_window"
+
+
+async def test_catch_up_while_on_break_with_target_time(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    # Clocked in at 08:00 with a target of 3 h: the end of day period starts at 11:00
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            **BASE,
+            "daily_hours": 3,
+            "break_mode": "auto",
+            "break_window_start": "09:30:00",
+            "break_window_end": "11:00:00",
+            "end_of_day_mode": "auto",
+            "break_end_reminder": False,
+        },
+        at_work=True,
+    )
+
+    await move(hass, False)
+    await advance(hass, freezer, 5 * MIN)
+    assert stamps(backend)[-1] == ("START_BREAK", NOW)
+
+    # Not back when the target would have been reached: the day ends with the break
+    await advance(hass, freezer, 57 * MIN)
+    assert stamps(backend)[-1] == ("CLOCK_OUT", NOW + MIN)
+    assert decision(mock_config_entry)["reason"] == "catch_up"
+
+
+async def test_catch_up_question_is_not_removed_by_old_expiry(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            **BASE,
+            "end_of_day_mode": "ask",
+            "end_of_day_time": "10:20:00",
+            "end_of_day_on_target": False,
+            "ask_on_leave": True,
+            "ask_timeout": 30,
+        },
+        at_work=True,
+    )
+
+    await move(hass, False)
+    await advance(hass, freezer, 5 * MIN)
+    assert notifications[-1].data["title"] == "Left work"
+
+    await advance(hass, freezer, 16 * MIN)
+    question = notifications[-1]
+    assert action_types(question)[0] == "CLOCK_OUT"
+    assert mock_config_entry.runtime_data.assistant.state.question_expires is None
+
+    # The first question would have expired at 10:35
+    await advance(hass, freezer, 20 * MIN)
+    assert notifications[-1] is question
+
+
+async def test_presence_carried_over_midnight_only_asks(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    clocked_out: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    notifications: list[ServiceCall],
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup(hass, mock_config_entry, {**BASE, "clock_in_mode": "auto"}, at_work=True)
+    assistant = mock_config_entry.runtime_data.assistant
+
+    # E.g. the PC kept running overnight: no new arrival on the new day
+    await assistant.auto.async_midnight()
+    await advance(hass, freezer, MIN)
+
+    assert stamps(clocked_out)[-1][0] == "CLOCK_OUT"
+    assert decision(mock_config_entry)["reason"] == "carried_over"
+    assert notifications[-1].data["title"] == "Already working?"
+    assert action_types(notifications[-1]) == ["CLOCK_IN", "IGNORE"]
+
+    # A real arrival stamps automatically again
+    await move(hass, False)
+    await advance(hass, freezer, 5 * MIN)
+    back = dt_util.utcnow()
+    await move(hass, True)
+    await advance(hass, freezer, 2 * MIN)
+    assert stamps(clocked_out)[-1] == ("START_WORK", back)
+
+
+async def test_arrival_waits_for_unreadable_vacation_calendar(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    clocked_out: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    working = {"value": False}
+
+    async def get_events(call: ServiceCall) -> ServiceResponse:
+        if not working["value"]:
+            raise HomeAssistantError("calendar down")
+        return {"calendar.privat": {"events": []}}
+
+    assert await async_setup_component(hass, "calendar", {})
+    hass.services.async_register(
+        "calendar", "get_events", get_events, supports_response=SupportsResponse.ONLY
+    )
+    await setup(
+        hass,
+        mock_config_entry,
+        {**BASE, "clock_in_mode": "auto", "absence_calendar": "calendar.privat"},
+    )
+
+    await move(hass, True)
+    await advance(hass, freezer, 4 * MIN)
+    assert stamps(clocked_out)[-1][0] == "CLOCK_OUT"
+    assert decision(mock_config_entry)["reason"] == "waiting_calendar"
+
+    working["value"] = True
+    await advance(hass, freezer, 2 * MIN)
+    assert stamps(clocked_out)[-1] == ("START_WORK", NOW)
+
+
+async def test_no_auto_resume_while_away(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    await setup(
+        hass,
+        mock_config_entry,
+        {
+            **BASE,
+            "break_mode": "auto",
+            "break_window_start": "09:30:00",
+            "break_window_end": "11:00:00",
+            "auto_resume": True,
+            "break_duration": 10,
+            "break_end_reminder": False,
+        },
+        at_work=True,
+    )
+
+    await move(hass, False)
+    await advance(hass, freezer, 5 * MIN)
+    assert stamps(backend)[-1] == ("START_BREAK", NOW)
+
+    # The break duration is over, but the user is still away
+    await advance(hass, freezer, 20 * MIN)
+    assert stamps(backend)[-1] == ("START_BREAK", NOW)
+
+    back = dt_util.utcnow()
+    await move(hass, True)
+    await advance(hass, freezer, 2 * MIN)
+    assert stamps(backend)[-1] == ("START_WORK", back)
+
+
+async def test_arrival_is_handled_after_ending_yesterdays_shift(
+    hass: HomeAssistant,
+    mock_client: AsyncMock,
+    backend: FakeBackend,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    # Clocking out was forgotten yesterday
+    backend.stamps.clear()
+    backend.add("START_WORK", NOW - timedelta(hours=26))
+    await setup(hass, mock_config_entry, {**BASE, "clock_in_mode": "auto"})
+
+    await move(hass, True)
+    await advance(hass, freezer, 2 * MIN)
+    assert decision(mock_config_entry)["reason"] == "already_clocked_in"
+
+    # The shift of yesterday is ended afterwards: the arrival of today counts now
+    backend.add("CLOCK_OUT", NOW - timedelta(hours=18))
+    await mock_config_entry.runtime_data.assistant.status.async_refresh()
+    await advance(hass, freezer, 2 * MIN)
+    assert stamps(backend)[-1] == ("START_WORK", NOW)
+    assert decision(mock_config_entry)["reason"] == "arrived"

@@ -56,6 +56,8 @@ Checkliste zum Abhaken. Gestempelt wird mit dem echten Crewmeister-Konto; Testst
 
 - [ ] HA neu starten, während sich die Anwesenheit ändert (z. B. WLAN verbinden während des Neustarts) → danach Kommen mit dem Zeitpunkt der Änderung.
 - [ ] Internet von HA kurz trennen und Stempel auslösen → „Automatik“ zeigt Warteschlange; nach Wiederverbindung wird mit Originalzeit gestempelt.
+- [ ] Feierabend ab 16:00, Wegzeit 5 min, um 16:02 gehen → ausgestempelt mit 15:57.
+- [ ] Erkennung bleibt über Nacht „da“ (z. B. PC an) → am nächsten Arbeitstag nur Nachfrage „Arbeitest du schon?“.
 - [ ] Schalter „Automatisches Stempeln“ aus → keine automatischen Stempel, Erinnerungen bleiben.
 
 ## 8. Live-Anzeige und Erinnerungen

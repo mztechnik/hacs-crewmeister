@@ -51,6 +51,9 @@ Schutzregeln für Verlässlichkeit:
 - Vor jedem Stempel wird der Status frisch geholt. Wurde schon am Terminal oder in der App gestempelt, wird nichts doppelt gesendet.
 - **Nach dem Ausstempeln nur noch Nachfrage:** Wurde heute schon ausgestempelt (egal wie), stempelt ein späteres Kommen am selben Tag nicht automatisch ein, sondern fragt nach. Das verhindert z. B. ein Einstempeln, wenn abends der PC zu Hause läuft.
 - Bist du im Büro erkannt, beendet der PC zu Hause nichts.
+- **Über Nacht durchgehend „da“** (z. B. der PC läuft durch): Am nächsten Arbeitstag wird nicht automatisch eingestempelt, sondern zu Beginn des Zeitfensters nachgefragt. Erst ein neues Ankommen stempelt wieder automatisch.
+- **Urlaubskalender nicht lesbar:** Solange der Kalender für heute nicht geladen werden konnte, wird nicht eingestempelt (Sensor „Automatik“: *Wartet auf Urlaubskalender*). Sobald er wieder lesbar ist, wird mit der ursprünglichen Ankunftszeit gestempelt.
+- „Nach der Pause automatisch weiterarbeiten“ gilt nur, solange du am Arbeitsplatz bist. Wer für die Pause gegangen ist, arbeitet mit dem Zurückkommen weiter.
 - Nachfrage-Knöpfe verfallen; veraltete Knöpfe werden abgelehnt.
 
 Der Sensor **„Automatik“** zeigt die letzte Entscheidung mit Grund (z. B. *Wartet auf Wegzeit*, *Urlaub / Abwesenheit*), dazu Stempelzeit, Ergebnis und die Zahl der Stempel in der Warteschlange. Der Sensor **„Arbeitsort“** zeigt in den Attributen, was jede Quelle gerade meldet. Damit findest du schnell heraus, warum gestempelt wurde oder warum nicht.
